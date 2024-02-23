@@ -1,7 +1,4 @@
 #include <sched.h>
-#include <io.h>
-#include <types.h>
-#include <interrupt.h>
 
 void zeos_show_clock();
 void kbd_routine();

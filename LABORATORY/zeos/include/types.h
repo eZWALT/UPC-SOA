@@ -1,5 +1,5 @@
 /*
- * types.h - Definició de tipus i estructures de dades
+ * types.h - Data Structures and Types definition
  */
 
 #ifndef __TYPES_H__

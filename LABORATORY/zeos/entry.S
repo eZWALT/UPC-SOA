@@ -4,8 +4,6 @@
 
 #include <asm.h>
 #include <segment.h>
-#include <interrupt.h>
-#include <types.h>
 
 
 /**************************************************/
