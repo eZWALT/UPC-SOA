@@ -1,7 +1,10 @@
 #include <sched.h>
 
 void zeos_show_clock();
+////
 void kbd_routine();
+void clk_routine();
+////
 void divide_error_routine();
 void debug_routine();
 void nm1_routine();

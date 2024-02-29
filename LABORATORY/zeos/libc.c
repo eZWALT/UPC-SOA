@@ -3,7 +3,6 @@
  */
 
 #include <libc.h>
-
 #include <types.h>
 
 int errno;
@@ -42,4 +41,3 @@ int strlen(char *a)
   
   return i;
 }
-

@@ -1,5 +1,5 @@
 /*
- * asm.h - Definició de variable global als fitxers .s
+ * asm.h - Definiciï¿½ de variable global als fitxers .s
  */
 
 #ifndef __ASM_H__
@@ -10,5 +10,6 @@
     .type name, @function; \
     .align 0; \
   name:
+  
 
 #endif  /* __ASM_H__ */

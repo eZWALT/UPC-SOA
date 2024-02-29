@@ -11,8 +11,6 @@
   SIEMPRE EN UNA PILA CUANDO SALTAMOS A UNA FUNCION SE EMPILA @RET I TAMBIEN EL EBP (+8)
 
   1. fer el page fault exception (Que a mes a mes guarda un param a la pila). Mostra un missatge amb la adreça de la instruccio que ha causat (EIP)
-  2. fer la interrupcio de teclat
-  3. fer la interrupcio de clock 
 
 */
 
@@ -89,11 +87,18 @@ void setIdt()
   idtR.limit = IDT_ENTRIES * sizeof(Gate) - 1;
   
   set_handlers();
-  //32 i 33
   /* ADD INITIALIZATION CODE FOR INTERRUPT VECTOR */
+  setInterruptHandler(32, clk_handler, 0);
   setInterruptHandler(33, kbd_handler, 0);
+  //FALTA PAGE FAULT?
+
+  setTrapHandler(0x80, sus_call_handler, 3);
 
   set_idt_reg(&idtR);
+}
+
+void clk_routine(){
+  zeos_show_clock();
 }
 
 void kbd_routine(){
@@ -110,3 +115,10 @@ void kbd_routine(){
     }
 
 }
+
+// SYSENTER MSRs:  CS (0x174),  ESP(0x175), @handler/EIP (0x176). SYSENTER pone los bits de privilege level PSW a 00
+// SYSENTER es necesario crear el CtxHW
+// MSR[ECX] <- EDX : EAX (concat)
+
+// LLAMADAS GETTIME() , SYS_WRITE
+
