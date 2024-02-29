@@ -56,6 +56,7 @@
       popl %ecx; \
       popl %ebx; \ 
       popl %esi; \
+      popl %edi; \
       popl %ebp; \ 
       popl %eax; \
       popl %ds; \
