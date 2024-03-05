@@ -4,7 +4,7 @@
 
 #include <asm.h>
 #include <segment.h>
-
+#include <errno.h>
 
 /**************************************************/
 /**** Save & Restore ******************************/
@@ -83,18 +83,17 @@ ENTRY(clk_handler)
       RESTORE_ALL
       iret;
 
-ENTRY(sus_call_handler)
+ENTRY(sys_call_handler)
       SAVE_ALL
-      //is 4
-      cmpl $0, %eax 
+      cmpl $0, %eax
       jl err
       cmpl $MAX_SYSCALL, %eax
-      jg err 
+      jg err
       call *sys_call_table(, %eax, 0x04)
-      jmp fin 
+      jmp fin
 err:
       movl $-ENOSYS, %eax 
 fin:
       movl %eax, 0x18(%esp)
       RESTORE_ALL 
-      iret       
+      iret

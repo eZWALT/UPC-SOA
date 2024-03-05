@@ -40,16 +40,13 @@ outb %al, $0x20;
 
 
 ENTRY(write)
-      //pasar parametres
       pushl %ebp
       mov %esp, %ebp
+      mov %edx, (%ebp, )
 
-      mov %edx, (%ebp, )  
+      mov $4, %eax; \
+      sysenter; \
 
-      mov $0x4, %eax
-      
-      sysenter
-
-      mov %ebp, %esp
-      popl %ebp 
-      ret 
+      mov %ebp, %esp; \
+      popl %ebp; \
+      ret; \ 

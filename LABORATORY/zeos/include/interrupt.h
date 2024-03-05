@@ -18,5 +18,6 @@ void setTrapHandler(int vector, void (*handler)(), int maxAccessibleFromPL);
 void setIdt();
 void kbd_handler();
 void clk_handler();
+// void sys_call_handler();
 
 #endif  /* __INTERRUPT_H__ */
