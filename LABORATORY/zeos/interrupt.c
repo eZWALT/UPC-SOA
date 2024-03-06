@@ -112,15 +112,16 @@ void kbd_routine(){
 void pgf_routine()
 {	
 	char * buf[16];
-	char * mesg = "\nProcess generates a PAGE FAULT exception at %eip = ";
+	char * mesg = "\nProcess generates a PAGE FAULT exception at %eip = 0x";
 
 	int pf_offender;
 	
 	asm("\t movl %%eax, %0" : "=r"(pf_offender));
 	
 	itohexa(pf_offender, buf);
+	strcat(mesg, buf);
 	
-	printk(buf);
+	printk(mesg);
 	
 	while (1) {};
 }

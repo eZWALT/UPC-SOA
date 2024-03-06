@@ -15,8 +15,8 @@ int __attribute__ ((__section__(".text.main")))
      /* __asm__ __volatile__ ("mov %0, %%cr3"::"r" (0) ); */
 
   // Deliberately raises a page fault exception
-  //char * p = 0;
-  //*p = "F";
+  char * p = 0;
+  *p = "F";
     
   while(1) { }
 }

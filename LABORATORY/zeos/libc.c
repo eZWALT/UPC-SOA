@@ -39,7 +39,7 @@ void itohexa(int a, char* b)
   if (a == 0) {b[0] = '0'; b[1]=0; return ;}
   
   i = 0;
-  while (a < 0)
+  while (a > 0)
   {
     r = a % 16;
     a = a / 16;
