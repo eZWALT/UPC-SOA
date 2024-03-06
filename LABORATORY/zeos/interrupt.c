@@ -6,6 +6,8 @@
 #include <segment.h>
 #include <hardware.h>
 #include <io.h>
+#include <libc.h>
+#include <zeos_interrupt.h>
 
 /*
   SIEMPRE EN UNA PILA CUANDO SALTAMOS A UNA FUNCION SE EMPILA @RET I TAMBIEN EL EBP (+8)
@@ -13,9 +15,6 @@
   1. fer el page fault exception (Que a mes a mes guarda un param a la pila). Mostra un missatge amb la adreça de la instruccio que ha causat (EIP)
 
 */
-
-#include <zeos_interrupt.h>
-
 Gate idt[IDT_ENTRIES];
 Register    idtR;
 
@@ -108,10 +107,22 @@ void kbd_routine(){
     if(!is_break){
         printc_xy(0x00, 0x00, char_map[scan_code]);
     }
-    else{
-        //NoFaRes
-    }
+}
 
+void pgf_routine()
+{	
+	char * buf[16];
+	char * mesg = "\nProcess generates a PAGE FAULT exception at %eip = ";
+
+	int pf_offender;
+	
+	asm("\t movl %%eax, %0" : "=r"(pf_offender));
+	
+	itohexa(pf_offender, buf);
+	
+	printk(buf);
+	
+	while (1) {};
 }
 
 // SYSENTER MSRs:  CS (0x174),  ESP(0x175), @handler/EIP (0x176). SYSENTER pone los bits de privilege level PSW a 00

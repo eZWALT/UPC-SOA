@@ -83,6 +83,15 @@ ENTRY(clk_handler)
       RESTORE_ALL
       iret;
 
+ENTRY(__wrap_page_fault_handler)
+	  SAVE_ALL
+	  EOI
+	  movl 0x30(%esp), %eax;   /* Saving to %eax the %eip that caused the exception */
+	  call pgf_routine;
+	  RESTORE_ALL
+	  addl $0x04, %esp;             /* Processor adds 4 bytes of error info */
+	  iret;
+
 ENTRY(sys_call_handler)
       SAVE_ALL
       cmpl $0, %eax
