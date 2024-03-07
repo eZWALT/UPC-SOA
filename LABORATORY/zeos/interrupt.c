@@ -14,10 +14,11 @@
 
 /*
   SIEMPRE EN UNA PILA CUANDO SALTAMOS A UNA FUNCION SE EMPILA @RET I TAMBIEN EL EBP (+8)
-
   1. fer el page fault exception (Que a mes a mes guarda un param a la pila). Mostra un missatge amb la adreça de la instruccio que ha causat (EIP)
-
 */
+
+int zeos_ticks = 0;
+
 Gate idt[IDT_ENTRIES];
 Register    idtR;
 
@@ -145,6 +146,4 @@ void pgf_routine()
 // SYSENTER MSRs:  CS (0x174),  ESP(0x175), @handler/EIP (0x176). SYSENTER pone los bits de privilege level PSW a 00
 // SYSENTER es necesario crear el CtxHW
 // MSR[ECX] <- EDX : EAX (concat)
-
-// LLAMADAS GETTIME() , SYS_WRITE
 

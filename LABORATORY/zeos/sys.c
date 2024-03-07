@@ -13,6 +13,9 @@
 #define ESCRIPTURA 1
 #define MAX_BUFFER_SIZE 512
 
+char kern_buff[MAX_BUFFER_SIZE];
+
+extern int zeos_ticks;
 
 int check_fd(int fd, int permissions)
 {
@@ -36,31 +39,30 @@ int check_fd(int fd, int permissions)
 int sys_write(int fd, char * buffer, int size)
 {
   int ret = check_fd(fd, ESCRIPTURA);
-  char buffer2[MAX_BUFFER_SIZE];
   int remaining_bytes = size;
   
   // Check the file descriptor
   if (ret)  return ret;
 
   // Check if buffer is not null
-  if (!access_ok(VERIFY_READ, buffer, size)) return EFAULT; /* EFAULT */
+  if (!access_ok(VERIFY_READ, buffer, size)) return -EFAULT; /* EFAULT */
 
   // Check size is positive
-  if (size < 0)       return EINVAL; /* EINVAL */
+  if (size < 0) return -EINVAL; /* EINVAL */
 
   //Writing through console is done by chunks of 512 bytes each at a time 
   while(remaining_bytes > MAX_BUFFER_SIZE){
     //Copy 512 bytes (USER -> KERNEL)
-    copy_from_user(buffer, buffer2, MAX_BUFFER_SIZE);
+    copy_from_user(buffer, kern_buff, MAX_BUFFER_SIZE);
     //Write 512 bytes to console
-    ret = sys_write_console(buffer2, MAX_BUFFER_SIZE);
+    ret = sys_write_console(kern_buff, MAX_BUFFER_SIZE);
     remaining_bytes -= ret;
     buffer += ret;
   }
 
   if(remaining_bytes > 0){
-    copy_from_user(buffer,buffer2, remaining_bytes);
-    ret = sys_write_console(buffer2, remaining_bytes);
+    copy_from_user(buffer,kern_buff, remaining_bytes);
+    ret = sys_write_console(kern_buff, remaining_bytes);
     remaining_bytes -= ret;
   }  
 

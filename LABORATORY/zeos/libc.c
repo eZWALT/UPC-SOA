@@ -4,6 +4,8 @@
 
 #include <libc.h>
 #include <types.h>
+#include <errno.h>
+#include <io.h>
 
 //Global variable for error codes
 int errno;
@@ -11,9 +13,31 @@ int errno;
 void perror(){
   char error_msg[256];
   //Errno is stored as an string into error_msg
-  itodeca(errno, error_msg);
-  //Write to stderr console (file descriptor 1) the error message
-  write(1, error_msg, strlen(error_msg));
+  //itodeca(errno, error_msg);
+
+  switch(errno){
+    case 0:
+      strcpy(error_msg,"\nOK\n");
+      break;
+    case EBADF:
+      strcpy(error_msg,"\nEBADF: The file descriptor is not valid, are you dumb?\n");
+      break;
+    case EACCES:
+      strcpy(error_msg,"\nEACESS: You are not allowed to write this file you stupid\n");
+      break;
+    case EFAULT:
+      strcpy(error_msg,"\nEFAULT: Bad address accessed, quit playing\n");
+      break;
+    case EINVAL:
+      strcpy(error_msg,"\nEINVAL: invalid argument\n");
+      break;
+    case ENOSYS: 
+      strcpy(error_msg,"\nENOSYS: SuSCall not implemented (yet)\n");
+    default:
+      strcpy(error_msg,"\nUnknown error\n");
+      break;
+  }
+  write(1,error_msg,strlen(error_msg));
 }
 
 void itodeca(int a, char *b)
@@ -74,6 +98,12 @@ void strcat(char * dest, char * src)
 {
   char * destPtr = dest + strlen(dest);
   while (*destPtr++ = *src++);
+}
+
+/* Append SRC to the end of DEST */
+void strcpy(char * dest, char * src)
+{
+  while (*dest++ = *src++);
 }
 
 int strlen(char *a)

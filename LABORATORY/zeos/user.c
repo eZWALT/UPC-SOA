@@ -14,12 +14,17 @@ int __attribute__ ((__section__(".text.main")))
     /* Next line, tries to move value 0 to CR3 register. This register is a privileged one, and so it will raise an exception */
      /* __asm__ __volatile__ ("mov %0, %%cr3"::"r" (0) ); */
 
-  // Deliberately raises a page fault exception
-  //int bytes = write();
+
+  // Deliberately raises a page fault exception  
   //char * p = 0;
   //*p = "F";
-  //char * p = "Willkommen welt\n";
-  //write(1, p, strlen(p));
+  
+  /*
+  char * p = "Willkommen welt";
+  write(1, p, strlen(p));
+  perror();
+
+  */  
 
   while(1) {
 

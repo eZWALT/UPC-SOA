@@ -9,20 +9,18 @@
 #include <stats.h>
 
 
-int write(int fd, char *buffer, int size);
-
+//string utils
 void itodeca(int a, char *b);
-
 void itohexa(int a, char *b);
-
 int strlen(char *a);
-
 void strcat(char *dest, char* src);
+void strcpy(char *dest, char* src);
 
+//syscalls wrappers
+int write(int fd, char *buffer, int size);
+int gettime();
 int getpid();
-
 int fork();
-
 void exit();
 
 extern int errno; 
