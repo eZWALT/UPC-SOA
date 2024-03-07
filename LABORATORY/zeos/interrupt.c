@@ -7,6 +7,9 @@
 #include <hardware.h>
 #include <io.h>
 #include <libc.h>
+
+//importing INITIAL_ESP (which is the kernel initial ESP)
+#include <sched.h>
 #include <zeos_interrupt.h>
 
 /*
@@ -79,6 +82,16 @@ void setTrapHandler(int vector, void (*handler)(), int maxAccessibleFromPL)
   idt[vector].highOffset      = highWord((DWord)handler);
 }
 
+void sys_call_handler_sysenter();
+
+void set_msr(unsigned long msr_addr, unsigned long low, unsigned long high);
+
+void set_sysenter_msrs(){
+  set_msr(0x174, __KERNEL_CS, 0);
+  set_msr(0x175, INITIAL_ESP, 0);
+  set_msr(0x176, (unsigned long) sys_call_handler_sysenter, 0);
+}
+
 void setIdt()
 {
   /* Program interrups/exception service routines */
@@ -89,7 +102,10 @@ void setIdt()
   /* ADD INITIALIZATION CODE FOR INTERRUPT VECTOR */
   setInterruptHandler(32, clk_handler, 0);
   setInterruptHandler(33, kbd_handler, 0);
+  //trap handler is only used for INT interruptions not SYSENTER
   //setTrapHandler(0x80, sys_call_handler, 3);
+
+  set_sysenter_msrs();
 
   set_idt_reg(&idtR);
 }

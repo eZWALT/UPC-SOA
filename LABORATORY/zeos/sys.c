@@ -7,9 +7,19 @@
 #include <mm.h>
 #include <mm_address.h>
 #include <sched.h>
+#include <errno.h>
 
 #define LECTURA 0
 #define ESCRIPTURA 1
+#define MAX_BUFFER_SIZE 512
+
+
+int check_fd(int fd, int permissions)
+{
+  if (fd!=1) return -9; /*EBADF*/
+  if (permissions!=ESCRIPTURA) return -13; /*EACCES*/
+  return 0;
+}
 
 /**
  * Writes data to a file descriptor.
@@ -23,30 +33,38 @@
  * @return Upon successful completion, the number of bytes written is returned. On error, -1 is returned,
  * and errno is set appropriately to indicate the error.
  */
-int sys_write(int fd, char * buffer, int size){
-
-  unsigned long bytes_written = 0;
+int sys_write(int fd, char * buffer, int size)
+{
+  int ret = check_fd(fd, ESCRIPTURA);
+  char buffer2[MAX_BUFFER_SIZE];
+  int remaining_bytes = size;
   
   // Check the file descriptor
-  int fd_check = check_fd(fd, ESCRIPTURA);
-  if (fd_check < 0)   return fd_check;
+  if (ret)  return ret;
 
   // Check if buffer is not null
-  if (buffer == NULL) return -14; /* EFAULT */
+  if (!access_ok(VERIFY_READ, buffer, size)) return EFAULT; /* EFAULT */
 
   // Check size is positive
-  if (size < 0)       return -22; /* EINVAL */
+  if (size < 0)       return EINVAL; /* EINVAL */
 
-  ///// TO DO
+  //Writing through console is done by chunks of 512 bytes each at a time 
+  while(remaining_bytes > MAX_BUFFER_SIZE){
+    //Copy 512 bytes (USER -> KERNEL)
+    copy_from_user(buffer, buffer2, MAX_BUFFER_SIZE);
+    //Write 512 bytes to console
+    ret = sys_write_console(buffer2, MAX_BUFFER_SIZE);
+    remaining_bytes -= ret;
+    buffer += ret;
+  }
 
-  return bytes_written;
-}
+  if(remaining_bytes > 0){
+    copy_from_user(buffer,buffer2, remaining_bytes);
+    ret = sys_write_console(buffer2, remaining_bytes);
+    remaining_bytes -= ret;
+  }  
 
-int check_fd(int fd, int permissions)
-{
-  if (fd!=1) return -9; /*EBADF*/
-  if (permissions!=ESCRIPTURA) return -13; /*EACCES*/
-  return 0;
+  return size - remaining_bytes;
 }
 
 int sys_ni_syscall()
@@ -74,6 +92,6 @@ void sys_exit()
 
 //System gettime -- 
 int sys_gettime(){
-
+  return 14;
 }
 

@@ -5,7 +5,16 @@
 #include <libc.h>
 #include <types.h>
 
+//Global variable for error codes
 int errno;
+
+void perror(){
+  char error_msg[256];
+  //Errno is stored as an string into error_msg
+  itodeca(errno, error_msg);
+  //Write to stderr console (file descriptor 1) the error message
+  write(1, error_msg, strlen(error_msg));
+}
 
 void itodeca(int a, char *b)
 {

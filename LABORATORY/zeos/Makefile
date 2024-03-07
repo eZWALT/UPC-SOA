@@ -25,6 +25,8 @@ LDFLAGS = -g -melf_i386 --wrap=page_fault_handler
 SYSOBJ = \
 	interrupt.o \
 	entry.o \
+	kernel_misc.o \
+	user_misc.o \
 	sys_call_table.o \
 	io.o \
 	sched.o \
@@ -41,6 +43,7 @@ LIBZEOS = -L . -l zeos
 #add to USROBJ any object files required to complete the user program
 USROBJ = \
 	libc.o \
+	user_misc.o\
 	# libjp.a \
 
 all:zeos.bin
@@ -62,6 +65,12 @@ bootsect.o: bootsect.s
 bootsect.s: bootsect.S
 	$(CPP) $(ASMFLAGS) -traditional $< -o $@
 
+kernel_misc.s: kernel_misc.S $(INCLUDEDIR)/asm.h 
+	$(CPP) $(ASMFLAGS) -o $@ $< 
+
+user_misc.s: user_misc.S $(INCLUDEDIR)/asm.h 
+	$(CPP) $(ASMFLAGS) -o $@ $<
+	
 entry.s: entry.S $(INCLUDEDIR)/asm.h $(INCLUDEDIR)/segment.h
 	$(CPP) $(ASMFLAGS) -o $@ $<
 
@@ -76,7 +85,7 @@ io.o:io.c $(INCLUDEDIR)/io.h
 
 sched.o:sched.c $(INCLUDEDIR)/sched.h
 
-libc.o:libc.c $(INCLUDEDIR)/libc.h
+libc.o:libc.c $(INCLUDEDIR)/libc.h 
 
 mm.o:mm.c $(INCLUDEDIR)/types.h $(INCLUDEDIR)/mm.h
 

@@ -2,7 +2,7 @@
 #define	ENOFILE		2	/* No such file or directory */
 #define	ENOENT		2
 #define	ESRCH		3	/* Cache failure */
-#define EINTR*		4	/* Interrupted function call* */
+#define EINTR		4	/* Interrupted function call* */
 #define	EIO	        5	/* Input/output error */
 #define	ENXIO		6	/* No such device or address */
 #define	E2BIG		7	/* Arg list too long */

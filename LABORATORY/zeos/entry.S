@@ -35,39 +35,40 @@
 /**                                              **/
 /**************************************************/
 
-#define SAVE_ALL \
-      pushl %gs; \
-      pushl %fs; \
-      pushl %es; \
-      pushl %ds; \
-      pushl %eax; \
-      pushl %ebp; \
-      pushl %edi; \
-      pushl %esi; \
-      pushl %ebx; \
-      pushl %ecx; \
-      pushl %edx; \
-      movl $__KERNEL_DS, %edx;    \
-      movl %edx, %ds;           \
+#define SAVE_ALL 
+      pushl %gs; 
+      pushl %fs; 
+      pushl %es; 
+      pushl %ds; 
+      pushl %eax; 
+      pushl %ebp; 
+      pushl %edi; 
+      pushl %esi; 
+      pushl %ebx; 
+      pushl %ecx; 
+      pushl %edx; 
+      movl $__KERNEL_DS, %edx;    
+      movl %edx, %ds;           
       movl %edx, %es;
 
-#define RESTORE_ALL \ 
-      popl %edx; \
-      popl %ecx; \
-      popl %ebx; \ 
-      popl %esi; \
-      popl %edi; \
-      popl %ebp; \ 
-      popl %eax; \
-      popl %ds; \
-      popl %es; \ 
-      popl %fs; \ 
+#define RESTORE_ALL  
+      popl %edx; 
+      popl %ecx; 
+      popl %ebx;  
+      popl %esi; 
+      popl %edi; 
+      popl %ebp;  
+      popl %eax; 
+      popl %ds; 
+      popl %es;  
+      popl %fs;  
       popl %gs; 
 
-#define EOI  \ 
-movb $0x20, %al; \ 
+#define EOI  
+movb $0x20, %al;  
 outb %al, $0x20; 
 
+//NOTE: iret restores EFLAGS, CS, EIP back to normal values, ret only restores EIP (%ebp + 4)
 
 ENTRY(kbd_handler) 
       SAVE_ALL 
@@ -92,7 +93,8 @@ ENTRY(__wrap_page_fault_handler)
 	  addl $0x04, %esp;             /* Processor adds 4 bytes of error info */
 	  iret;
 
-ENTRY(sys_call_handler)
+#THIS HANDLER SHOULD NOT BE USED AT ALL (Too sus)
+ENTRY(sus_call_handler)
       SAVE_ALL
       cmpl $0, %eax
       jl err
@@ -106,3 +108,34 @@ fin:
       movl %eax, 0x18(%esp)
       RESTORE_ALL 
       iret
+
+ENTRY(sys_call_handler_sysenter)
+      //PUSHING CtxHW
+      push $__USER_DS         #push user data segment         
+      push %ebp               #push user stack address 
+      pushfl                  #push EFLAGS (Processor Status Word)
+      push $__USER_CS         #push user code segment 
+      push 0x4(%ebp)          #push return address 
+
+      //PUSHING CtxSW
+      SAVE_ALL
+
+      //ERROR CHECKING
+      cmpl $0, %eax           # eax < 0 
+      jl sysenter_err         
+
+      cmpl $MAX_SYSCALL, %eax # eax < MAX_SYSCALL
+      jg sysenter_err
+
+      //PEGA UN PUTO CALL A SYS_XXX
+      call *sys_call_table(, %eax, 0x04)
+      jmp sysenter_end 
+sysenter_err: 
+      movl $-ENOSYS, %eax     #eax = - ENOSYS
+sysenter_end: 
+      movl %eax, 0x18(%esp)   #overwrite eax to avoid losing error code during RESTORE_ALL 
+      RESTORE_ALL
+      movl (%esp), %edx       # return address
+      movl 0xc(%esp), %ecx    # user stack adress 
+      sti                     # enable interrupts 
+      sysexit                 # sysexit goes back to user level privilege and restores EIP , ESP
