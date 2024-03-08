@@ -100,7 +100,7 @@ void strcat(char * dest, char * src)
   while (*destPtr++ = *src++);
 }
 
-/* Append SRC to the end of DEST */
+/* Replace SRC with DEST */
 void strcpy(char * dest, char * src)
 {
   while (*dest++ = *src++);

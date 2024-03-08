@@ -112,6 +112,7 @@ void setIdt()
 }
 
 void clk_routine(){
+  ++zeos_ticks;
   zeos_show_clock();
 }
 

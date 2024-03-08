@@ -16,17 +16,30 @@ int __attribute__ ((__section__(".text.main")))
 
 
   // Deliberately raises a page fault exception  
-  //char * p = 0;
-  //*p = "F";
-  
-  /*
-  char * p = "Willkommen welt";
-  write(1, p, strlen(p));
-  perror();
+  // char * p = 0;
+  // *p = "F";
 
-  */  
+  /*char * p = "Hallo welt";
+  write(1, p, strlen(p));
+  perror();*/
+
+  long long i = 0;
+
+
+  write(1, "\nShowing clock ticks since beginning:\n", 38); 
 
   while(1) {
+    if (++i == 100000000) i = 0;
 
+    if (i == 0){
+      int get_time = gettime();
+      char k[15];
+
+      itodeca(get_time, k);
+
+
+      write(1, k, strlen(k));
+      write(1, "\n", 1);
+    }
   }
 }

@@ -92,8 +92,8 @@ void sys_exit()
 {  
 }
 
-//System gettime -- 
+//System gettime
 int sys_gettime(){
-  return 14;
+  return zeos_ticks;
 }
 
