@@ -89,9 +89,9 @@ int __attribute__((__section__(".text.main")))
   /* Initialize Scheduling */
   init_sched();
 
-  /* Initialize idle task  data */
+  /* Initialize idle task (0)  data */
   init_idle();
-  /* Initialize task 1 data */
+  /* Initialize init task (1) data */
   init_task1();
 
   /* Move user code/data now (after the page table initialization) */

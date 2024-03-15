@@ -18,10 +18,12 @@ Register    gdtR;
 
 /* PAGING */
 /* Variables containing the page directory and the page table */
-  
+
+//array of the page directory for each process
 page_table_entry dir_pages[NR_TASKS][TOTAL_PAGES]
   __attribute__((__section__(".data.task")));
 
+//array of the page table for each process
 page_table_entry pagusr_table[NR_TASKS][TOTAL_PAGES]
   __attribute__((__section__(".data.task")));
 
