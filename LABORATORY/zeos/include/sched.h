@@ -23,7 +23,7 @@ struct task_struct {
   page_table_entry * dir_pages_baseAddr; /* Direccio base de la Taula de Pagines (Unica)*/
   struct list_head fq_node;              /* Node de free Queue*/
   struct list_head rq_node;              /* Node de ready Queue*/
-  int esp_register;                      /* Direcció del cim del stack (Per restaurar)*/
+  unsigned long kernel_esp0;                      /* Direcció del cim del stack (Per restaurar)*/
 };
 
 //UNION (PCB + SYS STACK)
@@ -54,7 +54,14 @@ void init_sched(void);
 
 struct task_struct * current();
 
+//Wrapper per guardar EBP, EBX, ESI, EDI
 void task_switch(union task_union*t);
+
+//Funcio principal
+void inner_task_switch(union task_union*t);
+
+//Part baix nivell de inner_task_switch
+void switch_stacks(void ** sp, void * new_sp);
 
 struct task_struct *list_head_to_task_struct(struct list_head *l);
 

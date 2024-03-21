@@ -76,7 +76,7 @@ void init_idle (void)
 	idle_union->stack[KERNEL_STACK_SIZE-2] = 0;
 
 	//Registrem el valor de %esp 
-	idle_pcb->esp_register = (unsigned long) &(idle_union->stack[KERNEL_STACK_SIZE-2]);
+	idle_pcb->kernel_esp0 = (unsigned long) &(idle_union->stack[KERNEL_STACK_SIZE-2]);
 
 	//Registrem aquesta tasca en un ambit global (PERO NO LA ENCUEM MAI!!!)
 	idle_task = idle_pcb;
@@ -85,10 +85,13 @@ void init_idle (void)
 
 void set_msr(unsigned long msr_addr, unsigned long low, unsigned long high);
 
+void get_ebp();
+
+void inner_task_switch_asm(union task_union* new);
+
 void init_task1(void)
 {
 	//Obte un element
-
 	struct list_head * elem = list_first(&freequeue);
 	//Esborrem aquesta entrada
 	list_del(elem);
@@ -109,11 +112,25 @@ void init_task1(void)
 	//Actualitzem MSR 0x175 amb la direccio nova del stack
 	set_msr(0x175, tss.esp0, 0);
 
-
 	//CR3 <- TP del nou proces
 	set_cr3(init_pcb->dir_pages_baseAddr);
 }
 
+void inner_task_switch(union task_union* new){
+	//obte NEW directori de paginaes
+	page_table_entry * NEW_DIR = get_DIR(&new->task);
+	//Tant el esp0 de TSS com MSR 0x175 apuntant a la base de la pila de NEW 
+	tss.esp0 = 	&(new->stack[KERNEL_STACK_SIZE]);
+	set_msr(0x175, &(new->stack[KERNEL_STACK_SIZE]),0);
+	//Posa NEW directori a CR3 i TLB flush 
+	set_cr3(NEW_DIR);
+
+	// current()->kernel_esp0 = %ebp 
+	// %esp <- new->task.kernek_esp0
+	switch_stacks(&current()->kernel_esp0, new->task.kernel_esp0);
+	
+
+}
 
 //Incialitza la freequeue y la readyqueu
 void init_sched()
