@@ -16,14 +16,14 @@ int __attribute__ ((__section__(".text.main")))
 
 
   // Deliberately raises a page fault exception  
-  // char * p = 0;
-  // *p = "F";
+  char * p = 0;
+  *p = "F";
 
   /*char * p = "Hallo welt";
   write(1, p, strlen(p));
   perror();*/
 
-  long long i = 0;
+  /*long long i = 0;
 
 
   write(1, "\nShowing clock ticks since beginning:\n", 38); 
@@ -41,5 +41,5 @@ int __attribute__ ((__section__(".text.main")))
       write(1, k, strlen(k));
       write(1, "\n", 1);
     }
-  }
+  }*/
 }

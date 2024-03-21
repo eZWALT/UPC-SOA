@@ -85,7 +85,7 @@ ENTRY(clk_handler)
       iret;
 
 ENTRY(__wrap_page_fault_handler)
-	  movl 0x30(%esp), %eax;   /* Saving to %eax the %eip that caused the exception */
+	  movl 0x04(%esp), %eax;   /* Saving to %eax the %eip that caused the exception */
 	  call pgf_routine;
 
 #THIS HANDLER SHOULD NOT BE USED AT ALL (Too sus)
