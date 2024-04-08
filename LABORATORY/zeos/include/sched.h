@@ -23,7 +23,7 @@ struct task_struct {
   page_table_entry * dir_pages_baseAddr; /* Direccio base de la Taula de Pagines (Unica)*/
   struct list_head fq_node;              /* Node de free Queue*/
   struct list_head rq_node;              /* Node de ready Queue*/
-  unsigned long kernel_esp0;                      /* Direcció del cim del stack (Per restaurar)*/
+  unsigned long kernel_esp0;             /* Direcció del cim del stack (Per restaurar)*/
 };
 
 //UNION (PCB + SYS STACK)
@@ -61,7 +61,7 @@ void task_switch(union task_union*t);
 void inner_task_switch(union task_union*t);
 
 //Part baix nivell de inner_task_switch
-void switch_stacks(void ** sp, void * new_sp);
+void switch_stacks(unsigned long * sp, unsigned long new_sp);
 
 struct task_struct *list_head_to_task_struct(struct list_head *l);
 

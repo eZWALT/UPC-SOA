@@ -85,10 +85,6 @@ void init_idle (void)
 
 void set_msr(unsigned long msr_addr, unsigned long low, unsigned long high);
 
-void get_ebp();
-
-void inner_task_switch_asm(union task_union* new);
-
 void init_task1(void)
 {
 	//Obte un element
@@ -106,11 +102,11 @@ void init_task1(void)
 	set_user_pages(init_pcb);
 
 	//Actualitzem el valor del stack TSS 
-	tss.esp0 = (unsigned long) &(init_union->stack[KERNEL_STACK_SIZE]);
+	tss.esp0 = (DWord) &(init_union->stack[KERNEL_STACK_SIZE]);
 	//PREGUNTA PER EL PROFE: PERQUE NO CAL POSAR SS0? tss.ss0 = ...;
 
 	//Actualitzem MSR 0x175 amb la direccio nova del stack
-	set_msr(0x175, tss.esp0, 0);
+	set_msr(0x175, (unsigned long)&(init_union->stack[KERNEL_STACK_SIZE]), 0);
 
 	//CR3 <- TP del nou proces
 	set_cr3(init_pcb->dir_pages_baseAddr);
@@ -120,8 +116,8 @@ void inner_task_switch(union task_union* new){
 	//obte NEW directori de paginaes
 	page_table_entry * NEW_DIR = get_DIR(&new->task);
 	//Tant el esp0 de TSS com MSR 0x175 apuntant a la base de la pila de NEW 
-	tss.esp0 = 	&(new->stack[KERNEL_STACK_SIZE]);
-	set_msr(0x175, &(new->stack[KERNEL_STACK_SIZE]),0);
+	tss.esp0 = (DWord) &(new->stack[KERNEL_STACK_SIZE]);
+	set_msr(0x175, (unsigned long) &(new->stack[KERNEL_STACK_SIZE]),0);
 	//Posa NEW directori a CR3 i TLB flush 
 	set_cr3(NEW_DIR);
 

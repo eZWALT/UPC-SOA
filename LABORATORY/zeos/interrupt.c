@@ -125,6 +125,9 @@ void kbd_routine(){
     if(!is_break){
         printc_xy(0x00, 0x00, char_map[scan_code]);
     }
+
+    union task_union* idle_union = (union task_union*) idle_task;
+    task_switch(idle_union);
 }
 
 void pgf_routine()

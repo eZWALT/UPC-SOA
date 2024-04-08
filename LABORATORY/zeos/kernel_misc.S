@@ -36,7 +36,7 @@ ENTRY(task_switch)
       popl %ebp 
       ret 
 
-//void switch_stacks(void ** sp + 4, void * new_sp + 8)
+//2 parametres: (sp, new_sp)
 ENTRY(switch_stacks)
       //eax <- sp
       movl 4(%esp), %eax 
