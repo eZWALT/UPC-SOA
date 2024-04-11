@@ -97,25 +97,21 @@ void init_task1(void)
 	//Assignem PID i Entrada del Directori de págines
 	init_pcb->PID = 1;
 	allocate_DIR(init_pcb);
-
 	//Assignem unes cuantes págines al usuari d'aquest proces
 	set_user_pages(init_pcb);
 
 	//Actualitzem el valor del stack TSS 
 	tss.esp0 = (DWord) &(init_union->stack[KERNEL_STACK_SIZE]);
-	//PREGUNTA PER EL PROFE: PERQUE NO CAL POSAR SS0? tss.ss0 = ...;
-
 	//Actualitzem MSR 0x175 amb la direccio nova del stack
 	set_msr(0x175, (unsigned long)&(init_union->stack[KERNEL_STACK_SIZE]), 0);
-
 	//CR3 <- TP del nou proces
 	set_cr3(init_pcb->dir_pages_baseAddr);
 }
 
 void inner_task_switch(union task_union* new){
 	//obte NEW directori de paginaes
-	page_table_entry * NEW_DIR = get_DIR(&new->task);
-	//Tant el esp0 de TSS com MSR 0x175 apuntant a la base de la pila de NEW 
+	page_table_entry * NEW_DIR = get_DIR(&(new->task));
+	//Tant el esp0 de TSS com MSR 0x175 apuntant a la base de la pila de NEW  (NO AL FUCKING CIM)
 	tss.esp0 = (DWord) &(new->stack[KERNEL_STACK_SIZE]);
 	set_msr(0x175, (unsigned long) &(new->stack[KERNEL_STACK_SIZE]),0);
 	//Posa NEW directori a CR3 i TLB flush 
@@ -123,12 +119,11 @@ void inner_task_switch(union task_union* new){
 
 	// current()->kernel_esp0 = %ebp 
 	// %esp <- new->task.kernek_esp0
-	switch_stacks(&current()->kernel_esp0, new->task.kernel_esp0);
-	
-
+	//ss2(&(current()->kernel_esp0), &(new->task.kernel_esp0));
+	swtich_stacks(current()->kernel_esp0, new->task.kernel_esp0)
 }
 
-//Incialitza la freequeue y la readyqueu
+//Incialitza la freequeue y la readyqueue
 void init_sched()
 {
 	INIT_LIST_HEAD(&freequeue);

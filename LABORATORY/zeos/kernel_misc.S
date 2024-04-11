@@ -25,25 +25,38 @@ ENTRY(task_switch)
       pushl %edi
       pushl %ebx 
 
+      //PUSH NEW
       pushl 8(%ebp)
       call inner_task_switch
-      addl 4, %esp 
 
       popl %ebx 
       popl %edi 
       popl %esi 
 
+      // Restaurem el stack pointer 
       popl %ebp 
       ret 
 
 //2 parametres: (sp, new_sp)
 ENTRY(switch_stacks)
-      //eax <- sp
-      movl 4(%esp), %eax 
       //Emagatzema %ebp en el cim del sp (Quan torni el proces la seva pila seguira desde aqui)
-      movl %ebp, (%eax) 
+      movl %ebp, 4(%esp)
       //mou el valor del new_sp dins de %esp
       movl 8(%esp), %esp 
       // restaura %ebp i %eip  (Tornem a task_switch)
+      popl %ebp 
+      ret 
+
+//2 parametres: (sp, new_sp)
+ENTRY(ss2)
+      pushl %ebp 
+      movl %esp, %ebp 
+      
+      movl 8(%ebp), %ebx
+      movl %ebp, (%ebx)
+
+      movl 12(%ebp), %ebx 
+      movl (%ebx), %esp 
+
       popl %ebp 
       ret 

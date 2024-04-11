@@ -13,6 +13,16 @@ ENTRY(sys_call_table)
 	.long sys_ni_syscall		/* 8 */
 	.long sys_ni_syscall
 	.long sys_gettime   		/* 10 */
+	.long sys_ni_syscall
+	.long sys_ni_syscall
+	.long sys_ni_syscall
+	.long sys_ni_syscall
+	.long sys_ni_syscall
+	.long sys_ni_syscall
+	.long sys_ni_syscall
+	.long sys_ni_syscall
+	.long sys_ni_syscall
+	.long sys_getpid			/* 20 */
 
 
 .globl MAX_SYSCALL

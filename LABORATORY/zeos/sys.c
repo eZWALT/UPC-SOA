@@ -24,6 +24,7 @@ int check_fd(int fd, int permissions)
   return 0;
 }
 
+
 /**
  * Writes data to a file descriptor.
  *
@@ -74,6 +75,9 @@ int sys_ni_syscall()
 	return -38; /*ENOSYS*/
 }
 
+/*
+  Returns the Process ID of the current process that is being executed
+*/
 int sys_getpid()
 {
 	return current()->PID;

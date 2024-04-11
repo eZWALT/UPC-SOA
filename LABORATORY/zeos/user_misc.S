@@ -98,3 +98,27 @@ sysenter_return_10:
 
       popl %ebp
       ret
+
+ENTRY(getpid)
+      pushl %ebp 
+      movl %esp , %ebp 
+
+      #Save ABI REGS: ebx, esi, edi
+      pushl %ebx 
+      pushl %esi
+      pushl %edi 
+
+      #System call index 20 
+      movl $20, %eax 
+
+      #Saving ecx, edx and return eip (Sysenter overwrrites them)
+      pushl %ecx 
+      pushl %edx 
+      pushl $sysenter_return_4
+
+      #Fuking a dynamic link (Sysenter doesn't perform that automatically)
+      push %ebp
+      movl %esp, %ebp 
+      sysenter 
+
+
