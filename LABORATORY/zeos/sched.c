@@ -11,7 +11,8 @@
 union task_union task[NR_TASKS]
   __attribute__((__section__(".data.task")));
 
-struct task_struct * idle_task = NULL;
+struct task_struct * idle_task  = NULL;
+struct task_struct * task1_task = NULL;
 
 
 //THIS FUNCTION SHOULD NEVER BE USED FROM LIST HEADS 
@@ -51,6 +52,8 @@ int allocate_DIR(struct task_struct *t)
 void cpu_idle(void)
 {
 	__asm__ __volatile__("sti": : :"memory");
+
+	printk("We just entered a CPU Idle!");
 
 	while(1)
 	{
@@ -106,6 +109,8 @@ void init_task1(void)
 	set_msr(0x175, (unsigned long)&(init_union->stack[KERNEL_STACK_SIZE]), 0);
 	//CR3 <- TP del nou proces
 	set_cr3(init_pcb->dir_pages_baseAddr);
+
+	task1_task = init_pcb;
 }
 
 void inner_task_switch(union task_union* new){
@@ -119,8 +124,7 @@ void inner_task_switch(union task_union* new){
 
 	// current()->kernel_esp0 = %ebp 
 	// %esp <- new->task.kernek_esp0
-	//ss2(&(current()->kernel_esp0), &(new->task.kernel_esp0));
-	swtich_stacks(current()->kernel_esp0, new->task.kernel_esp0)
+	switch_stacks(&current()->kernel_esp0, new->task.kernel_esp0);
 }
 
 //Incialitza la freequeue y la readyqueue

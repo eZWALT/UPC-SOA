@@ -8,7 +8,7 @@ int __attribute__ ((__section__(".text.main")))
   main(void)
 {
   int pid = getpid();
-  char * msg = "Alex ponos un 10 contaremos tu secreto al mundo\n PID: ";
+  char * msg = " test string!";
   char buff[64];
   itodeca(pid, buff);
   write(1, msg, strlen(msg));

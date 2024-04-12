@@ -16,6 +16,7 @@
   SIEMPRE EN UNA PILA CUANDO SALTAMOS A UNA FUNCION SE EMPILA @RET I TAMBIEN EL EBP (+8)
   1. fer el page fault exception (Que a mes a mes guarda un param a la pila). Mostra un missatge amb la adreça de la instruccio que ha causat (EIP)
 */
+int switch_idle = 0;
 
 int zeos_ticks = 0;
 
@@ -123,11 +124,14 @@ void kbd_routine(){
 
     //Maybe scan_code should be checked
     if(!is_break){
+        union task_union* idle_union = (union task_union*) idle_task;
+        union task_union* task1_union = (union task_union*) task1_task;
         printc_xy(0x00, 0x00, char_map[scan_code]);
+        if(current() == idle_task) task_switch(task1_task);
+        else task_switch(idle_task);
     }
 
-    union task_union* idle_union = (union task_union*) idle_task;
-    task_switch(idle_union);
+
 }
 
 void pgf_routine()

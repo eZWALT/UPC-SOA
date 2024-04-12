@@ -26,7 +26,7 @@ ENTRY(task_switch)
       pushl %ebx 
 
       //PUSH NEW
-      pushl 8(%ebp)
+      pushl 8(%ebp)                 # First parameter (pointer to new task_union)
       call inner_task_switch
 
       popl %ebx 
@@ -44,19 +44,5 @@ ENTRY(switch_stacks)
       //mou el valor del new_sp dins de %esp
       movl 8(%esp), %esp 
       // restaura %ebp i %eip  (Tornem a task_switch)
-      popl %ebp 
-      ret 
-
-//2 parametres: (sp, new_sp)
-ENTRY(ss2)
-      pushl %ebp 
-      movl %esp, %ebp 
-      
-      movl 8(%ebp), %ebx
-      movl %ebp, (%ebx)
-
-      movl 12(%ebp), %ebx 
-      movl (%ebx), %esp 
-
       popl %ebp 
       ret 

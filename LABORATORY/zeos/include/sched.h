@@ -36,6 +36,9 @@ union task_union {
 extern union task_union task[NR_TASKS]; 
 //POINTER TO IDLE PCB
 extern struct task_struct* idle_task;
+//POINTER TO TASK1 PCB
+extern struct task_struct* task1_task;
+
 
 #define KERNEL_ESP(t)       	(DWord) &(t)->stack[KERNEL_STACK_SIZE]
 
