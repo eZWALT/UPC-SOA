@@ -1,5 +1,5 @@
 /*
- * kernel_misc.S - Functions that is useful for the kernel (Such as set MSR registers)
+ * kernel_misc.S - Functions that are useful for the kernel (Such as set MSR registers)
  */
 
 #include <asm.h>
@@ -20,12 +20,10 @@ ENTRY(task_switch)
       pushl %ebp 
       movl %esp, %ebp 
 
-      //SAVE ABI REGS 
       pushl %esi 
       pushl %edi
-      pushl %ebx 
+      pushl %ebx
 
-      //PUSH NEW
       pushl 8(%ebp)                 # First parameter (pointer to new task_union)
       call inner_task_switch
 
@@ -33,16 +31,13 @@ ENTRY(task_switch)
       popl %edi 
       popl %esi 
 
-      // Restaurem el stack pointer 
       popl %ebp 
       ret 
 
-//2 parametres: (sp, new_sp)
-ENTRY(switch_stacks)
-      //Emagatzema %ebp en el cim del sp (Quan torni el proces la seva pila seguira desde aqui)
-      movl %ebp, 4(%esp)
-      //mou el valor del new_sp dins de %esp
-      movl 8(%esp), %esp 
-      // restaura %ebp i %eip  (Tornem a task_switch)
-      popl %ebp 
-      ret 
+ENTRY(switch_stacks)                # Two parameters at 4(%esp) and 8(%esp)
+
+      movl %ebp, 4(%esp)            # current()->kernel_esp = %esp (to %ebp pushed by inner_task_switch)
+      movl 8(%esp), %esp            # %esp = new()->kernel_esp
+      
+      popl %ebp                     # Go back to task_switch. Forget about inner_task_switch
+      ret                           # Jump directly to task_switch after call

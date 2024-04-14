@@ -53,7 +53,7 @@ void cpu_idle(void)
 {
 	__asm__ __volatile__("sti": : :"memory");
 
-	printk("We just entered a CPU Idle!");
+	printk("\nIdle entry point.\n");
 
 	while(1)
 	{
@@ -63,25 +63,25 @@ void cpu_idle(void)
 
 void init_idle (void)
 {
-	//Obté el primer element
+	// Get a free PCB and remove it from FQ
 	struct list_head * elem = list_first(&freequeue);
-	//Esborra el list node de la llista, segueix en el PCB d'aquell proces (En aquest moment cap)
 	list_del(elem);
+
 	struct task_struct* idle_pcb = list_head_to_task_struct(elem);
 	union task_union* idle_union = (union task_union*) idle_pcb; 
 	
-	//Asigna PID 0 i també asigna un directori de pagines
+	// Assign a PID of 0 and allocate a new directory table
 	idle_pcb->PID = 0;
-	int success = allocate_DIR(idle_pcb);
+	allocate_DIR(idle_pcb);
 
-	//Carrega el enllaç dinàmic amb la direccio de retorn i el valor del ebp (0)
-	idle_union->stack[KERNEL_STACK_SIZE-1] = (unsigned long) &cpu_idle;
+	// Load dynamic link with return value and fake ebp
 	idle_union->stack[KERNEL_STACK_SIZE-2] = 0;
+	idle_union->stack[KERNEL_STACK_SIZE-1] = (unsigned long) &cpu_idle;
 
-	//Registrem el valor de %esp 
+	// kernel_esp for Idle's task struct 
 	idle_pcb->kernel_esp0 = (unsigned long) &(idle_union->stack[KERNEL_STACK_SIZE-2]);
 
-	//Registrem aquesta tasca en un ambit global (PERO NO LA ENCUEM MAI!!!)
+	// Save reference to PCB for later when needed
 	idle_task = idle_pcb;
 
 }
@@ -90,44 +90,49 @@ void set_msr(unsigned long msr_addr, unsigned long low, unsigned long high);
 
 void init_task1(void)
 {
-	//Obte un element
+	// Get a free PCB and remove it from FQ
 	struct list_head * elem = list_first(&freequeue);
-	//Esborrem aquesta entrada
 	list_del(elem);
-	struct task_struct * init_pcb = list_head_to_task_struct(elem);
-	union task_union * init_union = (union task_union*) init_pcb;
 
-	//Assignem PID i Entrada del Directori de págines
-	init_pcb->PID = 1;
-	allocate_DIR(init_pcb);
-	//Assignem unes cuantes págines al usuari d'aquest proces
-	set_user_pages(init_pcb);
+	struct task_struct* task1_pcb = list_head_to_task_struct(elem);
+	union task_union* task1_union = (union task_union*) task1_pcb; 
 
-	//Actualitzem el valor del stack TSS 
-	tss.esp0 = (DWord) &(init_union->stack[KERNEL_STACK_SIZE]);
-	//Actualitzem MSR 0x175 amb la direccio nova del stack
-	set_msr(0x175, (unsigned long)&(init_union->stack[KERNEL_STACK_SIZE]), 0);
-	//CR3 <- TP del nou proces
-	set_cr3(init_pcb->dir_pages_baseAddr);
+	// Assign a PID of 1 and allocate a new directory table
+	task1_pcb->PID = 1;
+	allocate_DIR(task1_pcb);
 
-	task1_task = init_pcb;
+	// Allocate pages to task1
+	set_user_pages(task1_pcb);
+
+	// Update TSS and MSR with the base address of task1_union 
+	tss.esp0 = (unsigned long) &(task1_union->stack[KERNEL_STACK_SIZE]);
+	set_msr(0x175, (unsigned long)&(task1_union->stack[KERNEL_STACK_SIZE]), 0);
+
+	// Update %cr3 and flush TLB
+	set_cr3(task1_pcb->dir_pages_baseAddr);
+
+	// Save reference to PCB for later when needed
+	task1_task = task1_pcb;
 }
 
-void inner_task_switch(union task_union* new){
-	//obte NEW directori de paginaes
-	page_table_entry * NEW_DIR = get_DIR(&(new->task));
-	//Tant el esp0 de TSS com MSR 0x175 apuntant a la base de la pila de NEW  (NO AL FUCKING CIM)
-	tss.esp0 = (DWord) &(new->stack[KERNEL_STACK_SIZE]);
-	set_msr(0x175, (unsigned long) &(new->stack[KERNEL_STACK_SIZE]),0);
-	//Posa NEW directori a CR3 i TLB flush 
-	set_cr3(NEW_DIR);
+void inner_task_switch(union task_union* new)
+{
+	// Get the directory of new task
+	page_table_entry * new_dir = get_DIR(&(new->task));
 
-	// current()->kernel_esp0 = %ebp 
-	// %esp <- new->task.kernek_esp0
-	switch_stacks(&current()->kernel_esp0, new->task.kernel_esp0);
+	// Update TSS and MSR with the base address of new
+	tss.esp0 = (unsigned long) &(new->stack[KERNEL_STACK_SIZE]);
+	set_msr(0x175, (unsigned long) &(new->stack[KERNEL_STACK_SIZE]), 0);
+
+	// Update %cr3 and flush TLB 
+	set_cr3(new_dir);
+
+	// current()->kernel_esp0 = %ebp
+	// %esp = new->task.kernel_esp0
+	switch_stacks(&(current()->kernel_esp0), new->task.kernel_esp0);
 }
 
-//Incialitza la freequeue y la readyqueue
+// Initializes FQ and RQ
 void init_sched()
 {
 	INIT_LIST_HEAD(&freequeue);

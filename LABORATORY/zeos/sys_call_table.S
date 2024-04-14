@@ -4,7 +4,7 @@
 ENTRY(sys_call_table)
 	.long sys_ni_syscall		/* 0 */
 	.long sys_ni_syscall    
-	.long sys_ni_syscall 
+	.long sys_fork				/* 2 */ 
 	.long sys_ni_syscall 
 	.long sys_write				/* 4 */
 	.long sys_ni_syscall
