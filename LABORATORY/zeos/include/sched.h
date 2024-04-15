@@ -19,11 +19,12 @@ enum state_t { ST_RUN, ST_READY, ST_BLOCKED };
 
 //PCB 
 struct task_struct {
-  int PID;			                         /* Process ID. This MUST be the first field of the struct. */
-  page_table_entry * dir_pages_baseAddr; /* Direccio base de la Taula de Pagines (Unica)*/
-  struct list_head fq_node;              /* Node de free Queue*/
-  struct list_head rq_node;              /* Node de ready Queue*/
-  unsigned long kernel_esp0;             /* Direcció del cim del stack (Per restaurar)*/
+    int PID;			                         /* Process ID. This MUST be the first field of the struct. */
+    page_table_entry * dir_pages_baseAddr; /* Direccio base de la Taula de Pagines (Unica)*/
+    struct list_head fq_node;              /* Node de free Queue*/
+    struct list_head rq_node;              /* Node de ready Queue*/
+    unsigned long kernel_esp0;             /* Direcció del cim del stack (Per restaurar)*/
+    //unsigned int nr_ticks;                 /* Number of ticks process has spent using CPU */
 };
 
 //UNION (PCB + SYS STACK)
@@ -38,7 +39,10 @@ extern union task_union task[NR_TASKS];
 extern struct task_struct* idle_task;
 //POINTER TO TASK1 PCB
 extern struct task_struct* task1_task;
-
+// NEXT PID
+extern int next_pid;
+// RQ and FQ
+extern struct list_head freequeue, readyqueue;
 
 #define KERNEL_ESP(t)       	(DWord) &(t)->stack[KERNEL_STACK_SIZE]
 

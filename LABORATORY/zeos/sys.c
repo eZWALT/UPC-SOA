@@ -8,6 +8,7 @@
 #include <mm_address.h>
 #include <sched.h>
 #include <errno.h>
+#include <types.h>
 
 #define LECTURA 0
 #define ESCRIPTURA 1
@@ -23,6 +24,9 @@ int check_fd(int fd, int permissions)
     if (permissions!=ESCRIPTURA) return -13; /*EACCES*/
     return 0;
 }
+
+// Declaration of ret_from_fork
+int ret_from_fork();
 
 /**
  * Creates a new process by duplicating the calling process.
@@ -44,41 +48,67 @@ int sys_fork()
     struct list_head* elem = list_first(&freequeue);
     list_del(elem);
 
-    struct taks_struct* child_pcb = list_head_to_task_struct(elem);
+    struct task_struct* child_pcb = list_head_to_task_struct(elem);
     union task_union* child_union = (union task_union*) child_pcb; 
-
+    union task_union* parent_union = (union task_union*) current();
     // Copying entire union task_union
-    copy_data(current()->stack, child_union->stack, PAGE_SIZE);
+    copy_data(parent_union->stack, child_union->stack, PAGE_SIZE);
 
     // allocate a new directory table
     allocate_DIR(child_pcb);
 
     // search for frames to allocate
-    struct page_table_entry* pt_child  = get_PT(child_pcb);
-    struct page_table_entry* pt_parent = get_PT(current()->task);
+    page_table_entry* pt_child  = get_PT(child_pcb);
+    page_table_entry* pt_parent = get_PT(current());
 
-    int pag; 
-    int new_ph_pag;
+    int new_ph_pag, old_ph_pag, pag;
+
+    /* KERNEL */
+    for (pag=0; pag < NUM_PAG_KERNEL; pag++) 
+        pt_child[pag] = pt_parent[pag];
 
     /* CODE */
-    for (pag=0;pag<NUM_PAG_CODE;pag++){
-
+    for (pag=0; pag < NUM_PAG_CODE; pag++)
         pt_child[PAG_LOG_INIT_CODE+pag] = pt_parent[PAG_LOG_INIT_CODE+pag];
+
+    /* DATA */
+
+    // KERNEL (256) + (NUM_PAG_DATA + NUM_PAG_CODE) | --> FREE
+    for (pag=0; pag < NUM_PAG_DATA; pag++){
+        new_ph_pag = alloc_frame();
+
+        if (new_ph_pag < 0) {
+            free_user_pages(child_pcb);
+            return -ENOMEM;
+        }
+
+        set_ss_pag(pt_parent, USER_LAST_PAGE + pag, new_ph_pag);
+        set_ss_pag(pt_child, USER_FIRST_PAGE + pag, new_ph_pag);
+
+        copy_data((void *)((USER_FIRST_PAGE + pag) << 12), (void *)((USER_LAST_PAGE + pag) << 12), PAGE_SIZE);
+
+        del_ss_pag(pt_parent, USER_LAST_PAGE + pag);
     }
 
-    /* DATA */ 
-    for (pag=0;pag<NUM_PAG_DATA;pag++){
-        new_ph_pag=alloc_frame();
-        if (new_ph_pag < 0) return -ENOMEM; // Not enough free frames
+    // Flush of the Translation Lookaside Buffer
+    set_cr3(get_DIR(current()));
 
-        process_PT[PAG_LOG_INIT_DATA+pag].entry = 0;
-        process_PT[PAG_LOG_INIT_DATA+pag].bits.pbase_addr = new_ph_pag;
-        process_PT[PAG_LOG_INIT_DATA+pag].bits.user = 1;
-        process_PT[PAG_LOG_INIT_DATA+pag].bits.rw = 1;
-        process_PT[PAG_LOG_INIT_DATA+pag].bits.present = 1;
-    }
+    // Process ID and NR_TICKS
+    child_pcb->PID = next_pid++;
+    //child_pcb->nr_ticks = 0;
 
-    return PID;
+    // Insert the child to the RQ
+    list_add_tail( &(child_pcb->rq_node), &readyqueue );
+
+    // Prepare child's system stack
+    child_union->stack[KERNEL_STACK_SIZE - 18] = (unsigned long) &ret_from_fork;
+    child_union->stack[KERNEL_STACK_SIZE - 19] = 0;
+
+    // Update kernel_esp
+    child_pcb->kernel_esp0 = (unsigned long *) &child_union->stack[KERNEL_STACK_SIZE - 19];
+
+    // return
+    return child_pcb->PID;
 }
 
 

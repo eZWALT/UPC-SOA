@@ -13,7 +13,7 @@ union task_union task[NR_TASKS]
 
 struct task_struct * idle_task  = NULL;
 struct task_struct * task1_task = NULL;
-
+int next_pid = 2;
 
 //THIS FUNCTION SHOULD NEVER BE USED FROM LIST HEADS 
 struct task_struct * list_head_to_task_struct(struct list_head *l)
@@ -53,7 +53,7 @@ void cpu_idle(void)
 {
 	__asm__ __volatile__("sti": : :"memory");
 
-	printk("\nIdle entry point.\n");
+	printk("\nI'm IDLE!");
 
 	while(1)
 	{
@@ -73,6 +73,7 @@ void init_idle (void)
 	// Assign a PID of 0 and allocate a new directory table
 	idle_pcb->PID = 0;
 	allocate_DIR(idle_pcb);
+    //idle_pcb->nr_ticks = 0;
 
 	// Load dynamic link with return value and fake ebp
 	idle_union->stack[KERNEL_STACK_SIZE-2] = 0;
@@ -99,6 +100,7 @@ void init_task1(void)
 
 	// Assign a PID of 1 and allocate a new directory table
 	task1_pcb->PID = 1;
+    //task1_pcb->nr_ticks = 0;
 	allocate_DIR(task1_pcb);
 
 	// Allocate pages to task1

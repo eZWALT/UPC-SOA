@@ -33,6 +33,8 @@ void perror(){
       break;
     case ENOSYS: 
       strcpy(error_msg,"\nENOSYS: SuSCall not implemented (yet)\n");
+    case ENOMEM:
+      strcpy(error_msg,"\nENOMEM: Insufficient memory, download more ram\n");
     default:
       strcpy(error_msg,"\nUnknown error\n");
       break;

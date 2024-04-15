@@ -5,39 +5,49 @@
 #include <asm.h>
 
 ENTRY(set_msr)
-      push %ebp 
-      movl %esp, %ebp               #prologue
+    push %ebp 
+    movl %esp, %ebp               #prologue
 
-      movl 0x8(%ebp), %ecx          #first param (msr address)
-      movl 0xc(%ebp), %eax          #second param (low)
-      movl 0x10(%ebp), %edx         #third param (high)
-      wrmsr                         # msr[%ecx] = %edx : %eax 
+    movl 0x8(%ebp), %ecx          #first param (msr address)
+    movl 0xc(%ebp), %eax          #second param (low)
+    movl 0x10(%ebp), %edx         #third param (high)
+    wrmsr                         # msr[%ecx] = %edx : %eax 
 
-      popl %ebp                     #epilogue
-      ret 
+    popl %ebp                     #epilogue
+    ret 
 
 ENTRY(task_switch)
-      pushl %ebp 
-      movl %esp, %ebp 
+    pushl %ebp 
+    movl %esp, %ebp 
 
-      pushl %esi 
-      pushl %edi
-      pushl %ebx
+    pushl %esi 
+    pushl %edi
+    pushl %ebx
 
-      pushl 8(%ebp)                 # First parameter (pointer to new task_union)
-      call inner_task_switch
+    pushl 8(%ebp)                 # First parameter (pointer to new task_union)
+    call inner_task_switch
 
-      popl %ebx 
-      popl %edi 
-      popl %esi 
+    popl %ebx                     # Junk parameter
+    popl %ebx 
+    popl %edi 
+    popl %esi 
 
-      popl %ebp 
-      ret 
+    popl %ebp 
+    ret 
 
-ENTRY(switch_stacks)                # Two parameters at 4(%esp) and 8(%esp)
+ENTRY(switch_stacks)              # Two parameters at 4(%esp) and 8(%esp)
 
-      movl %ebp, 4(%esp)            # current()->kernel_esp = %esp (to %ebp pushed by inner_task_switch)
-      movl 8(%esp), %esp            # %esp = new()->kernel_esp
-      
-      popl %ebp                     # Go back to task_switch. Forget about inner_task_switch
-      ret                           # Jump directly to task_switch after call
+    movl %ebp, 4(%esp)            # current()->kernel_esp = %esp (to %ebp pushed by inner_task_switch)
+    movl 8(%esp), %esp            # %esp = new()->kernel_esp
+    
+    popl %ebp                     # Go back to task_switch. Forget about inner_task_switch
+    ret                           # Jump directly to task_switch after call
+
+ENTRY(ret_from_fork)
+    push %ebp
+    
+    movl %esp, %ebp
+    movl %eax, 0
+
+    pop %ebp
+    ret

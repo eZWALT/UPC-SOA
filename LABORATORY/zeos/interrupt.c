@@ -115,6 +115,9 @@ void setIdt()
 void clk_routine(){
   ++zeos_ticks;
   zeos_show_clock();
+
+  // Update current's nr_ticks
+  // current()->nr_ticks++;
 }
 
 void kbd_routine(){
