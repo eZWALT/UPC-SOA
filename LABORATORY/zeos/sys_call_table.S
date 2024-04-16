@@ -20,8 +20,8 @@ ENTRY(sys_call_table)
 	.long sys_ni_syscall
 	.long sys_ni_syscall
 	.long sys_ni_syscall
-	.long sys_ni_syscall
-	.long sys_ni_syscall
+	.long sys_unblock			/* 18 */
+	.long sys_unblock			/* 19 */
 	.long sys_getpid			/* 20 */
 
 

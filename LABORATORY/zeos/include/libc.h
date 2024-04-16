@@ -23,8 +23,10 @@ int getpid();
 int fork();
 void exit();
 
-extern int errno; 
+void block();
+int unblock(int pid);
 
+extern int errno; 
 void perror();
 
 #endif  /* __LIBC_H__ */

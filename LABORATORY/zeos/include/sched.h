@@ -23,8 +23,14 @@ struct task_struct {
     page_table_entry * dir_pages_baseAddr; /* Direccio base de la Taula de Pagines (Unica)*/
     struct list_head fq_node;              /* Node de free Queue*/
     struct list_head rq_node;              /* Node de ready Queue*/
-    unsigned long kernel_esp0;             /* Direcció del cim del stack (Per restaurar)*/
-    //unsigned int nr_ticks;                 /* Number of ticks process has spent using CPU */
+    struct list_head blk_node;             /* Node de blocked Queue*/
+
+    struct list_head sons;                 /* Node de llista de processos fills*/
+    struct task_struct* parent;            /* Punter al proces pare*/
+
+    unsigned long kernel_esp0;             /* Direcció del cim del stack (Per restaurar) */
+    //unsigned int nr_ticks;               /* Number of ticks process has spent using CPU */
+    int pending_unblocks;                  /* Nombre d'operacions de desbloqueig pendents */ 
 };
 
 //UNION (PCB + SYS STACK)

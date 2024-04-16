@@ -138,3 +138,40 @@ ENTRY(exit)
     push %ebp 
     movl %esp, %ebp 
     sysenter
+
+ENTRY(block)
+    pushl %ebp 
+    movl %esp, %ebp 
+
+    pushl %ebx 
+    pushl %esi 
+    pushl %edi 
+
+    movl $0x12, %eax 
+
+    pushl %ecx 
+    pushl %edx 
+    pushl $sysenter_return
+
+    push %ebp 
+    movl %esp, %ebp 
+    sysenter
+
+ENTRY(unblock)
+    pushl %ebp 
+    movl %esp, %ebp 
+
+    pushl %ebx 
+    pushl %esi 
+    pushl %edi 
+
+    movl 0x8(%ebp), %edx   # PID Parameter 
+    movl $0x13, %eax 
+
+    pushl %ecx 
+    pushl %edx 
+    pushl $sysenter_return
+
+    push %ebp 
+    movl %esp, %ebp 
+    sysenter

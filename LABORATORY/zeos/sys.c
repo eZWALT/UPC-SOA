@@ -170,7 +170,6 @@ int sys_getpid()
 	return current()->PID;
 }
 
-
 void sys_exit()
 {  
     //Mark the process PID as free
@@ -193,5 +192,20 @@ void sys_exit()
 //System gettime
 int sys_gettime(){
     return zeos_ticks;
+}
+
+int sys_block(){
+    struct task_struct* proc_pcb = current();
+    //Node is added to blocked list
+    if(proc_pcb->pending_unblocks == 0){
+        list_add_tail(&(proc_pcb->blk_node), &blocked);
+        return 0;
+    } 
+    else -1;
+}
+
+int sys_unblock(int pid){
+
+    return -1;
 }
 
