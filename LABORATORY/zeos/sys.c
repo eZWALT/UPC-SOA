@@ -173,6 +173,21 @@ int sys_getpid()
 
 void sys_exit()
 {  
+    //Mark the process PID as free
+    struct task_struct * proc_pcb = current();
+    union task_union * proc_union = (union task_union*) proc_pcb;
+    proc_pcb->PID = -1;
+    
+    //Free the allocated phyiscal frames and page directory
+    free_user_pages(proc_pcb);
+    proc_pcb->dir_pages_baseAddr = NULL;
+
+    //Now the PCB is free to use 
+    list_add_tail(&proc_pcb->fq_node, &freequeue);
+
+    //Schedule the next process to be executed
+    //sched_next_rr();    
+
 }
 
 //System gettime

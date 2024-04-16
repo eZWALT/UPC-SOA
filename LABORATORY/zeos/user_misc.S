@@ -24,14 +24,14 @@ ENTRY(write)
     # Saving ecx, edx and the return eip
     push %ecx 
     push %edx 
-    push $sysenter_return_4
+    push $sysenter_return
 
     # Faking a dynamic link (sysenter doesn't perform that automatically)
     push %ebp
     mov %esp, %ebp 
     sysenter
 
-sysenter_return_4:
+sysenter_return:
     pop %ebp    # restore ebp
     pop %edx    # useless @sysenter_return value 
     pop %edx    # restore edx 
@@ -70,34 +70,12 @@ ENTRY(gettime)
     # Saving ecx, edx and the return eip
     push %ecx
     push %edx 
-    push $sysenter_return_10
+    push $sysenter_return
 
     # Faking a dynamic link (sysenter doesn't perform that automatically)
     push %ebp
     mov %esp, %ebp 
     sysenter
-
-sysenter_return_10:
-    pop %ebp    # restore ebp
-    pop %edx    # useless @sysenter_return value 
-    pop %edx    # restore edx 
-    pop %ecx    # restore ecx
-
-    popl %edi
-    popl %esi
-    popl %ebx
-
-    # If eax is positive, jump to the end
-    test %eax, %eax
-    jns fin
-
-    # Error
-    neg %eax
-    mov %eax, errno
-    mov $-1, %eax
-
-    popl %ebp
-    ret
 
 ENTRY(getpid)
     pushl %ebp 
@@ -114,7 +92,7 @@ ENTRY(getpid)
     #Saving ecx, edx and return eip (Sysenter overwrrites them)
     pushl %ecx 
     pushl %edx 
-    pushl $sysenter_return_4
+    pushl $sysenter_return
 
     #Fuking a dynamic link (Sysenter doesn't perform that automatically)
     push %ebp
@@ -136,9 +114,27 @@ ENTRY(fork)
     #Saving ecx, edx and return eip (Sysenter overwrrites them)
     pushl %ecx 
     pushl %edx 
-    pushl $sysenter_return_4
+    pushl $sysenter_return
 
     #F*king a dynamic link (Sysenter doesn't perform that automatically)
     push %ebp
+    movl %esp, %ebp 
+    sysenter
+
+ENTRY(exit)
+    pushl %ebp 
+    movl %esp, %ebp 
+
+    pushl %ebx 
+    pushl %esi 
+    pushl %edi 
+
+    movl $0x01, %eax 
+
+    pushl %ecx 
+    pushl %edx 
+    pushl $sysenter_return
+
+    push %ebp 
     movl %esp, %ebp 
     sysenter

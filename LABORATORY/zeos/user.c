@@ -10,7 +10,7 @@ main(void)
     // Please modify this function with your desired user.c code
     test_task_switch();
     // NOP
-    while(1);
+    while(1){}
 }
 
 inline void test_create_fork(){

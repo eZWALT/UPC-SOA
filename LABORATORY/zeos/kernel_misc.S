@@ -37,7 +37,8 @@ ENTRY(task_switch)
 
 ENTRY(switch_stacks)              # Two parameters at 4(%esp) and 8(%esp)
 
-    movl %ebp, 4(%esp)            # current()->kernel_esp = %esp (to %ebp pushed by inner_task_switch)
+    movl 4(%esp), %esi            # current()->kernel_esp = %esp (to %ebp pushed by inner_task_switch)
+    movl %ebp, (%esi)
     movl 8(%esp), %esp            # %esp = new()->kernel_esp
     
     popl %ebp                     # Go back to task_switch. Forget about inner_task_switch
