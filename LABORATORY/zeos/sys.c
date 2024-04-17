@@ -220,9 +220,7 @@ int sys_block(){
     //Node is added to blocked list
     if(proc_pcb->pending_unblocks == 0){
 
-        //Erase the process from its queue 
-        list_del(&(proc_pcb->node));
-        //Put it into the blocked queue
+        //Put it into the blocked queue, since its running it shouldn't be in any queue
         list_add_tail(&(proc_pcb->node), &blocked);
         proc_pcb->state = ST_BLOCKED;
         //Schedule a new process now that it's blocked

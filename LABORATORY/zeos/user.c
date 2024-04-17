@@ -14,11 +14,14 @@ main(void)
     while(1){}
 }
 
+//SCHEDULE DOESNOT WORK!!!!
 inline void test_block(){
     int pid = fork();
     if(pid == 0) block();
     else{
-        while(1000000);
+        while(1000000){
+            int a = 2;
+        }
         char * msg = "\n I'm the father and I'm going to unblock the shit out of my son";
         write(1, msg, strlen(msg));
         unblock(pid);

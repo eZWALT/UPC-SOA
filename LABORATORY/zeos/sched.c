@@ -213,6 +213,8 @@ int needs_sched_rr()
         // Is RQ empty?
         return !list_empty(&readyqueue);
     }
+	//is the current process blocked??
+	if(proc_pcb->state == ST_BLOCKED) return !list_empty(&readyqueue);
 
     return 0;
 }
