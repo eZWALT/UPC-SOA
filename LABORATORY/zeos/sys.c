@@ -95,10 +95,10 @@ int sys_fork()
 
     // Process ID and NR_TICKS
     child_pcb->PID = next_pid++;
-    //child_pcb->nr_ticks = 0;
+    child_pcb->nr_ticks = 0;
 
     // Insert the child to the RQ
-    list_add_tail( &(child_pcb->rq_node), &readyqueue );
+    list_add_tail( &(child_pcb->node), &readyqueue );
 
     // Prepare child's system stack
     child_union->stack[KERNEL_STACK_SIZE - 18] = (unsigned long) &ret_from_fork;
@@ -106,6 +106,11 @@ int sys_fork()
 
     // Update kernel_esp
     child_pcb->kernel_esp0 = (unsigned long *) &child_union->stack[KERNEL_STACK_SIZE - 19];
+
+    // Pointers in familiy tree
+    INIT_LIST_HEAD( &child_pcb->sons );
+    //list_add_tail( &child_pcb->bros, &current()->sons);
+    child_pcb->parent = current();
 
     // return
     return child_pcb->PID;
@@ -177,15 +182,28 @@ void sys_exit()
     union task_union * proc_union = (union task_union*) proc_pcb;
     proc_pcb->PID = -1;
     
+
+    //Now the PCB is free to use 
+    list_add_tail(&proc_pcb->node, &freequeue);
+
+    // Pointer mgmt
+    list_del( &proc_pcb->bros ); 
+
+    struct list_head * e;
+    list_for_each( e, &proc_pcb->sons ){
+        // Change father
+        struct task_struct * ch = list_head_to_task_struct(e);
+        ch->parent = idle_task;
+        list_del(&ch->bros);
+        list_add_tail(&ch->bros, &idle_task->sons);
+    }
+
     //Free the allocated phyiscal frames and page directory
     free_user_pages(proc_pcb);
     proc_pcb->dir_pages_baseAddr = NULL;
 
-    //Now the PCB is free to use 
-    list_add_tail(&proc_pcb->fq_node, &freequeue);
-
     //Schedule the next process to be executed
-    //sched_next_rr();    
+    sched_next_rr();    
 
 }
 
@@ -198,10 +216,13 @@ int sys_block(){
     struct task_struct* proc_pcb = current();
     //Node is added to blocked list
     if(proc_pcb->pending_unblocks == 0){
-        list_add_tail(&(proc_pcb->blk_node), &blocked);
+
+        list_del(&(proc_pcb->node));
+        //list_add_tail(&(proc_pcb->node), &blocked);
         return 0;
     } 
-    else -1;
+    
+    return -1;
 }
 
 int sys_unblock(int pid){

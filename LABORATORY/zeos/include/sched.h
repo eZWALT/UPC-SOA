@@ -19,18 +19,18 @@ enum state_t { ST_RUN, ST_READY, ST_BLOCKED };
 
 //PCB 
 struct task_struct {
-    int PID;			                         /* Process ID. This MUST be the first field of the struct. */
-    page_table_entry * dir_pages_baseAddr; /* Direccio base de la Taula de Pagines (Unica)*/
-    struct list_head fq_node;              /* Node de free Queue*/
-    struct list_head rq_node;              /* Node de ready Queue*/
-    struct list_head blk_node;             /* Node de blocked Queue*/
+    int PID;			                   /* Process ID. This MUST be the first field of the struct. */
+    page_table_entry * dir_pages_baseAddr; /* Base address of page directory */
+    struct list_head node;                 /* Node for state queues (FQ, RQ, BQ) */
 
-    struct list_head sons;                 /* Node de llista de processos fills*/
-    struct task_struct* parent;            /* Punter al proces pare*/
+    struct list_head sons;                 /* Children list */
+    struct list_head bros;                 /* Brothers list */
+    struct task_struct* parent;            /* Pointer to father's PCB */
 
-    unsigned long kernel_esp0;             /* Direcció del cim del stack (Per restaurar) */
-    //unsigned int nr_ticks;               /* Number of ticks process has spent using CPU */
-    int pending_unblocks;                  /* Nombre d'operacions de desbloqueig pendents */ 
+    unsigned long kernel_esp0;             /* Reference to top of system stack */
+    unsigned int nr_ticks;                 /* Number of ticks process has spent using CPU */
+    unsigned int quantum;                  /* CPU Quantum */
+    int pending_unblocks;                  /* Number of pending unblocks left */ 
 };
 
 //UNION (PCB + SYS STACK)
@@ -49,6 +49,8 @@ extern struct task_struct* task1_task;
 extern int next_pid;
 // RQ and FQ
 extern struct list_head freequeue, readyqueue;
+// Number of tiks since last task switch
+extern unsigned int ticks_since_last_switch;
 
 #define KERNEL_ESP(t)       	(DWord) &(t)->stack[KERNEL_STACK_SIZE]
 
@@ -85,9 +87,12 @@ page_table_entry * get_PT (struct task_struct *t) ;
 page_table_entry * get_DIR (struct task_struct *t) ;
 
 /* Headers for the scheduling policy */
+void schedule();
 void sched_next_rr();
 void update_process_state_rr(struct task_struct *t, struct list_head *dest);
 int needs_sched_rr();
 void update_sched_data_rr();
+int get_quantum(struct task_struct* t);
+void set_quantum(struct task_struct* t, int new_quantum);
 
 #endif  /* __SCHED_H__ */

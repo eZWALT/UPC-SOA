@@ -8,7 +8,7 @@ int __attribute__ ((__section__(".text.main")))
 main(void)
 {
     // Please modify this function with your desired user.c code
-    test_task_switch();
+    test_scheduling();
     // NOP
     while(1){}
 }
@@ -52,4 +52,31 @@ inline void test_task_switch(){
 
     // Press any key to perform the task_switch
     // Check that the msg is printed every time we switch from IDLE to INIT
+}
+
+inline void test_scheduling(){
+    char buff[16];
+    char * nl = "\n PID = ";
+
+    fork();
+    fork();
+
+    int my_pid = getpid();
+    itodeca(my_pid, buff);
+
+    while (1){
+        write(1, nl, strlen(nl));
+        write(1, buff, strlen(buff));
+
+    }
+}
+
+inline void test_scheduling_2()
+{
+    char * msg = "\nAlive";
+
+    int x = fork();
+
+    if (x == 0) while(1){ write(1, msg, strlen(msg)); }
+    else exit();
 }

@@ -46,9 +46,9 @@ ENTRY(switch_stacks)              # Two parameters at 4(%esp) and 8(%esp)
 
 ENTRY(ret_from_fork)
     push %ebp
-    
     movl %esp, %ebp
-    movl %eax, 0
+    
+    movl $0, %eax
 
     pop %ebp
     ret
