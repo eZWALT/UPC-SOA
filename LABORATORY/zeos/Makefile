@@ -40,10 +40,11 @@ SYSOBJ = \
 
 LIBZEOS = -L . -l zeos
 
-#add to USROBJ any object files required to complete the user program
+#add to USROBJ any object files required to complete the user program (list.o is useful source: trust me bro)
 USROBJ = \
 	libc.o \
 	user_misc.o\
+	list.o \
 	# libjp.a \
 
 all:zeos.bin

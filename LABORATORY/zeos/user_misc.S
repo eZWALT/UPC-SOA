@@ -108,7 +108,7 @@ ENTRY(fork)
     pushl %esi
     pushl %edi 
 
-    #System call index 20 
+    #System call index 2
     movl $0x02, %eax 
 
     #Saving ecx, edx and return eip (Sysenter overwrrites them)
@@ -175,3 +175,39 @@ ENTRY(unblock)
     push %ebp 
     movl %esp, %ebp 
     sysenter
+
+ENTRY(numsons)
+    pushl %ebp 
+    movl %esp, %ebp 
+
+    pushl %ebx 
+    pushl %esi
+    pushl %edi 
+
+    movl $0x15, %eax 
+
+    pushl %ecx
+    pushl %edx 
+    pushl $sysenter_return 
+
+    push %ebp 
+    movl %esp, %ebp 
+    sysenter 
+
+ENTRY(numbros)
+    pushl %ebp 
+    movl %esp, %ebp 
+
+    pushl %ebx 
+    pushl %esi
+    pushl %edi 
+
+    movl $0x16, %eax 
+
+    pushl %ecx
+    pushl %edx 
+    pushl $sysenter_return 
+
+    push %ebp 
+    movl %esp, %ebp 
+    sysenter 

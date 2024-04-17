@@ -1,9 +1,16 @@
 #ifndef _LINUX_LIST_H
 #define _LINUX_LIST_H
 
+#include <stddef.h>
+
 struct list_head {
 	struct list_head *next, *prev;
 };
+
+
+// Self-Made functions
+int list_size(const struct list_head *head);
+
 
 /*
  * Simple doubly linked list implementation.
@@ -63,7 +70,6 @@ void INIT_LIST_HEAD(struct list_head *head);
  * This is good for implementing stacks.
  */
 void list_add(struct list_head *new, struct list_head *head);
-
 
 /**
  * list_add_tail - add a new entry

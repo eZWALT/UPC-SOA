@@ -25,6 +25,65 @@ int check_fd(int fd, int permissions)
     return 0;
 }
 
+/**
+ * Writes data to a file descriptor.
+ *
+ * This function writes data from the specified buffer to the file associated with the file descriptor.
+ * The amount of data written may be less than requested if there is insufficient space available.
+ *
+ * @param fd The file descriptor to write to.
+ * @param buffer Pointer to the buffer containing the data to be written.
+ * @param size The number of bytes to write.
+ * @return Upon successful completion, the number of bytes written is returned. On error, -1 is returned,
+ * and errno is set appropriately to indicate the error.
+ */
+int sys_write(int fd, char * buffer, int size)
+{
+    int ret = check_fd(fd, ESCRIPTURA);
+    int remaining_bytes = size;
+
+    // Check the file descriptor
+    if (ret) return ret;
+
+    // Check if buffer is not null
+    if (!access_ok(VERIFY_READ, buffer, size)) return -EFAULT; /* EFAULT */
+
+    // Check size is positive
+    if (size < 0) return -EINVAL; /* EINVAL */
+
+    // Writing through console is done by chunks of 512 bytes each at a time 
+    while(remaining_bytes > MAX_BUFFER_SIZE){
+        // Copy 512 bytes (USER -> KERNEL)
+        copy_from_user(buffer, kern_buff, MAX_BUFFER_SIZE);
+        // Write 512 bytes to console
+        ret = sys_write_console(kern_buff, MAX_BUFFER_SIZE);
+        remaining_bytes -= ret;
+        buffer += ret;
+    }   
+
+    if(remaining_bytes > 0){
+        copy_from_user(buffer,kern_buff, remaining_bytes);
+        ret = sys_write_console(kern_buff, remaining_bytes);
+        remaining_bytes -= ret;
+    }  
+
+    return size - remaining_bytes;
+}
+
+
+int sys_ni_syscall()
+{
+    return -38; /*ENOSYS*/
+}
+
+/*
+  Returns the Process ID of the current process that is being executed
+*/
+int sys_getpid()
+{
+	return current()->PID;
+}
+
 // Declaration of ret_from_fork
 int ret_from_fork();
 
@@ -93,12 +152,12 @@ int sys_fork()
     // Flush of the Translation Lookaside Buffer
     set_cr3(get_DIR(current()));
 
-    // Process ID and NR_TICKS
+    // Process ID and NR_TICKS and the state
     child_pcb->PID = next_pid++;
     child_pcb->nr_ticks = 0;
-
+    child_pcb->state = ST_READY;
     // Insert the child to the RQ
-    list_add_tail( &(child_pcb->node), &readyqueue );
+    list_add_tail( &(child_pcb->node), &readyqueue);
 
     // Prepare child's system stack
     child_union->stack[KERNEL_STACK_SIZE - 18] = (unsigned long) &ret_from_fork;
@@ -108,71 +167,13 @@ int sys_fork()
     child_pcb->kernel_esp0 = (unsigned long *) &child_union->stack[KERNEL_STACK_SIZE - 19];
 
     // Pointers in familiy tree
-    INIT_LIST_HEAD( &child_pcb->sons );
-    //list_add_tail( &child_pcb->bros, &current()->sons);
     child_pcb->parent = current();
+    INIT_LIST_HEAD(&child_pcb->sons);
+    //The next line is kind of sus??? (MAKES SENSE BUT SHOULD BE REVISED)
+    list_add_tail( &child_pcb->bros, &current()->sons);
 
     // return
     return child_pcb->PID;
-}
-
-
-/**
- * Writes data to a file descriptor.
- *
- * This function writes data from the specified buffer to the file associated with the file descriptor.
- * The amount of data written may be less than requested if there is insufficient space available.
- *
- * @param fd The file descriptor to write to.
- * @param buffer Pointer to the buffer containing the data to be written.
- * @param size The number of bytes to write.
- * @return Upon successful completion, the number of bytes written is returned. On error, -1 is returned,
- * and errno is set appropriately to indicate the error.
- */
-int sys_write(int fd, char * buffer, int size)
-{
-    int ret = check_fd(fd, ESCRIPTURA);
-    int remaining_bytes = size;
-
-    // Check the file descriptor
-    if (ret) return ret;
-
-    // Check if buffer is not null
-    if (!access_ok(VERIFY_READ, buffer, size)) return -EFAULT; /* EFAULT */
-
-    // Check size is positive
-    if (size < 0) return -EINVAL; /* EINVAL */
-
-    // Writing through console is done by chunks of 512 bytes each at a time 
-    while(remaining_bytes > MAX_BUFFER_SIZE){
-        // Copy 512 bytes (USER -> KERNEL)
-        copy_from_user(buffer, kern_buff, MAX_BUFFER_SIZE);
-        // Write 512 bytes to console
-        ret = sys_write_console(kern_buff, MAX_BUFFER_SIZE);
-        remaining_bytes -= ret;
-        buffer += ret;
-    }   
-
-    if(remaining_bytes > 0){
-        copy_from_user(buffer,kern_buff, remaining_bytes);
-        ret = sys_write_console(kern_buff, remaining_bytes);
-        remaining_bytes -= ret;
-    }  
-
-    return size - remaining_bytes;
-}
-
-int sys_ni_syscall()
-{
-    return -38; /*ENOSYS*/
-}
-
-/*
-  Returns the Process ID of the current process that is being executed
-*/
-int sys_getpid()
-{
-	return current()->PID;
 }
 
 void sys_exit()
@@ -180,21 +181,22 @@ void sys_exit()
     //Mark the process PID as free
     struct task_struct * proc_pcb = current();
     union task_union * proc_union = (union task_union*) proc_pcb;
-    proc_pcb->PID = -1;
-    
+    proc_pcb->PID = -1;    
 
-    //Now the PCB is free to use 
-    list_add_tail(&proc_pcb->node, &freequeue);
+    // Erase this dude from the list of his BROS if needed !!!!
+    if(list_size(&proc_pcb->bros) > 0) list_del( &proc_pcb->bros ); 
 
-    // Pointer mgmt
-    list_del( &proc_pcb->bros ); 
+    //char buff[64];
+    //itodeca(list_size(&proc_pcb->sons), buff);
+    //printk(buff);
 
-    struct list_head * e;
-    list_for_each( e, &proc_pcb->sons ){
-        // Change father
+    struct list_head * e, *tmp;
+    list_for_each_safe(e, tmp,&proc_pcb->sons ){
+        // Change father of the son to IDLE
         struct task_struct * ch = list_head_to_task_struct(e);
         ch->parent = idle_task;
-        list_del(&ch->bros);
+        //if(!list_empty(ch->bros)) list_del(&ch->bros);
+        if(list_size(&proc_pcb->sons) > 0) list_del(&ch->bros);
         list_add_tail(&ch->bros, &idle_task->sons);
     }
 
@@ -203,6 +205,7 @@ void sys_exit()
     proc_pcb->dir_pages_baseAddr = NULL;
 
     //Schedule the next process to be executed
+    update_process_state_rr(proc_pcb, &freequeue, ST_ZOMBIE);
     sched_next_rr();    
 
 }
@@ -217,16 +220,48 @@ int sys_block(){
     //Node is added to blocked list
     if(proc_pcb->pending_unblocks == 0){
 
+        //Erase the process from its queue 
         list_del(&(proc_pcb->node));
-        //list_add_tail(&(proc_pcb->node), &blocked);
-        return 0;
-    } 
+        //Put it into the blocked queue
+        list_add_tail(&(proc_pcb->node), &blocked);
+        proc_pcb->state = ST_BLOCKED;
+        //Schedule a new process now that it's blocked
+        schedule();
+    }
+    else proc_pcb->pending_unblocks--; 
     
-    return -1;
+    return 0;
 }
 
 int sys_unblock(int pid){
+    struct task_struct* proc_pcb = current();
+    struct list_head *pos,*n;
 
+    //find the child with PID == pid
+    list_for_each_safe(pos, n, &proc_pcb->sons){
+        struct task_struct* son = list_head_to_task_struct(pos);
+        if(son->PID == pid){
+            //if son blocked, unblock it!
+            if(son->state == ST_BLOCKED){
+                son->state = ST_READY;
+                //I'm not sure of the line below???
+                son->pending_unblocks = 0;
+                list_del(&(son->node));
+                list_add_tail(&(son->node), &readyqueue);
+            }
+            else son->pending_unblocks++;
+            //if son ublocked, just ++
+            return 0;
+        }
+    }
+    //If no son is found...
     return -1;
 }
 
+int sys_numsons(){
+    return list_size(&(current()->sons));
+}
+
+int sys_numbros(){
+    return list_size(&(current()->bros));
+}

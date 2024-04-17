@@ -16,6 +16,10 @@ int strlen(char *a);
 void strcat(char *dest, char* src);
 void strcpy(char *dest, char* src);
 
+//Custom syscalls for current process
+int numsons();
+int numbros();
+
 //syscalls wrappers
 int write(int fd, char *buffer, int size);
 int gettime();

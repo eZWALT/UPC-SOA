@@ -7,6 +7,17 @@
 #include <mm.h>
 #include <io.h>
 
+/*
+//This function is actually wrong, it should use exit on each children
+void kill_all_my_fucking_children(struct task_struct* process){
+  struct list_head *son;
+  list_for_each(son, &process->sons){
+    list_del(son);
+    list_add_tail(son, &process->dead_sons);
+  }
+}
+*/
+
 //INITIALIZE THE DATA STRUCTURES DESCRIBED IN SCHED.H
 union task_union task[NR_TASKS]
   __attribute__((__section__(".data.task")));
@@ -22,9 +33,10 @@ struct task_struct * list_head_to_task_struct(struct list_head *l)
 	return (struct task_struct *)((unsigned long) l & 0xFFFFF000);
 }
 
-extern struct list_head blocked;
 struct list_head freequeue;
 struct list_head readyqueue;
+// Queue for blocked processes in I/O 
+struct list_head blocked;
 
 /* get_DIR - Returns the Page Directory address for task 't' */
 page_table_entry * get_DIR (struct task_struct *t) 
@@ -72,8 +84,11 @@ void init_idle (void)
 	
 	// Assign a PID of 0 and allocate a new directory table
 	idle_pcb->PID = 0;
+	idle_pcb->nr_ticks = 0;
 	allocate_DIR(idle_pcb);
-    idle_pcb->nr_ticks = 0;
+
+    // Family
+    INIT_LIST_HEAD(&idle_pcb->sons);
 
 	// Load dynamic link with return value and fake ebp
 	idle_union->stack[KERNEL_STACK_SIZE-2] = 0;
@@ -81,10 +96,6 @@ void init_idle (void)
 
 	// kernel_esp for Idle's task struct 
 	idle_pcb->kernel_esp0 = (unsigned long) &(idle_union->stack[KERNEL_STACK_SIZE-2]);
-
-    // Family
-    INIT_LIST_HEAD(&idle_pcb->sons);
-
 	// Save reference to PCB for later when needed
 	idle_task = idle_pcb;
 
@@ -104,9 +115,14 @@ void init_task1(void)
 	// Assign a PID of 1 and allocate a new directory table
 	task1_pcb->PID = 1;
     task1_pcb->nr_ticks = 0;
-	allocate_DIR(task1_pcb);
+	//This process will always be the first to RUN without task_switch
+	task1_pcb->state = ST_RUN;
+
+	//Initialize the lists of brothers  and sons 
+	INIT_LIST_HEAD(&task1_pcb->sons);
 
 	// Allocate pages to task1
+	allocate_DIR(task1_pcb);
 	set_user_pages(task1_pcb);
 
 	// Update TSS and MSR with the base address of task1_union 
@@ -153,7 +169,7 @@ void schedule()
         sched_next_rr();
 }
 
-// Initializes FQ and RQ
+// Initializes FQ, RQ and BQ
 void init_sched()
 {
 	INIT_LIST_HEAD(&freequeue);
@@ -164,6 +180,7 @@ void init_sched()
 	}
 
 	INIT_LIST_HEAD(&readyqueue);
+	INIT_LIST_HEAD(&blocked);
 }
 
 struct task_struct* current()
@@ -200,13 +217,20 @@ int needs_sched_rr()
     return 0;
 }
 
-void update_process_state_rr(struct task_struct *t, struct list_head *dest){    
+void update_process_state_rr(struct task_struct *t, struct list_head *dest, enum state_t dest_state){    
 
-    if (dest == NULL) list_del(&t->node);
-    else if (current() == t) list_add_tail(&t->node, dest);
+    if (dest == NULL){
+		list_del(&t->node);
+		t->state = ST_RUN;
+	} 
+    else if (current() == t){
+		list_add_tail(&t->node, dest);
+		t->state = dest_state;
+	}
     else {
         list_del(&t->node);
         list_add_tail(&t->node, dest);
+		t->state = dest_state;
     }
     
 }
@@ -218,18 +242,20 @@ void sched_next_rr()
         // IDLE time !
         ticks_since_last_switch = 0;
         task_switch(&idle_task);
+		return;
     }
 
 
     struct list_head* new_list_item = list_first(&readyqueue);
     struct task_struct* new = list_head_to_task_struct(new_list_item);
 
-    if (current()->PID != 0) update_process_state_rr(current(), &readyqueue);
-    update_process_state_rr(new, NULL);
+    if (current()->PID != 0) update_process_state_rr(current(), &readyqueue, ST_READY);
+    update_process_state_rr(new, NULL, ST_RUN);
     // Update ticks since last task switch
     ticks_since_last_switch = 0;
 
     task_switch(new);
+	return;
 }
 
 int get_quantum(struct task_struct* t)

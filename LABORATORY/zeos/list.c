@@ -1,5 +1,19 @@
 #include <list.h>
 
+int list_size(const struct list_head *head){
+	int count = 0;
+	struct list_head* pos;
+
+	//CHECK FOR AN EMPTY LIST
+	if (head == NULL || list_empty(head)) return 0;
+
+	// Iterate throught the succesor until returning to 
+	for(pos = head->next; pos != head; pos=pos->next){
+		count++;
+	}
+	return count;
+
+}
 /* 
  * Initializes an empty list.
  */
