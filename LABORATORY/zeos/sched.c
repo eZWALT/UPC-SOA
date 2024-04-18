@@ -117,6 +117,7 @@ void init_task1(void)
     task1_pcb->nr_ticks = 0;
 	//This process will always be the first to RUN without task_switch
 	task1_pcb->state = ST_RUN;
+    task1_pcb->pending_unblocks = 0;
 
 	//Initialize the lists of brothers  and sons 
 	INIT_LIST_HEAD(&task1_pcb->sons);
@@ -213,8 +214,8 @@ int needs_sched_rr()
         // Is RQ empty?
         return !list_empty(&readyqueue);
     }
-	//is the current process blocked??
-	if(proc_pcb->state == ST_BLOCKED) return !list_empty(&readyqueue);
+	//is the current process blocked?
+	if(proc_pcb->state == ST_BLOCKED) return 1;
 
     return 0;
 }
@@ -243,7 +244,7 @@ void sched_next_rr()
     {
         // IDLE time !
         ticks_since_last_switch = 0;
-        task_switch(&idle_task);
+        task_switch((union task_union *) idle_task);
 		return;
     }
 
@@ -251,12 +252,12 @@ void sched_next_rr()
     struct list_head* new_list_item = list_first(&readyqueue);
     struct task_struct* new = list_head_to_task_struct(new_list_item);
 
-    if (current()->PID != 0) update_process_state_rr(current(), &readyqueue, ST_READY);
+    if (current()->PID > 0 && current()->state != ST_BLOCKED) update_process_state_rr(current(), &readyqueue, ST_READY);
     update_process_state_rr(new, NULL, ST_RUN);
     // Update ticks since last task switch
     ticks_since_last_switch = 0;
 
-    task_switch(new);
+    task_switch((union task_union *) new);
 	return;
 }
 

@@ -156,6 +156,7 @@ int sys_fork()
     child_pcb->PID = next_pid++;
     child_pcb->nr_ticks = 0;
     child_pcb->state = ST_READY;
+    child_pcb->pending_unblocks = 0;
     // Insert the child to the RQ
     list_add_tail( &(child_pcb->node), &readyqueue);
 
@@ -181,33 +182,35 @@ void sys_exit()
     //Mark the process PID as free
     struct task_struct * proc_pcb = current();
     union task_union * proc_union = (union task_union*) proc_pcb;
-    proc_pcb->PID = -1;    
 
-    // Erase this dude from the list of his BROS if needed !!!!
-    if(list_size(&proc_pcb->bros) > 0) list_del( &proc_pcb->bros ); 
+    if (proc_pcb->PID != 1) list_del(&proc_pcb->bros);
+
+    proc_pcb->PID = -1;
 
     //char buff[64];
     //itodeca(list_size(&proc_pcb->sons), buff);
     //printk(buff);
 
     struct list_head * e, *tmp;
-    list_for_each_safe(e, tmp,&proc_pcb->sons ){
-        // Change father of the son to IDLE
-        struct task_struct * ch = list_head_to_task_struct(e);
-        ch->parent = idle_task;
-        //if(!list_empty(ch->bros)) list_del(&ch->bros);
-        if(list_size(&proc_pcb->sons) > 0) list_del(&ch->bros);
-        list_add_tail(&ch->bros, &idle_task->sons);
+
+    for (int i = 0; i < NR_TASKS; ++i)
+    {   
+        if (task[i].task.parent != current()) continue;
+
+        task[i].task.parent = idle_task;
+        list_del(&task[i].task.bros);
+        list_add_tail(&task[i].task.bros, &idle_task->sons);
     }
+
+
+    //Schedule the next process to be executed
+    update_process_state_rr(proc_pcb, &freequeue, ST_ZOMBIE);
 
     //Free the allocated phyiscal frames and page directory
     free_user_pages(proc_pcb);
     proc_pcb->dir_pages_baseAddr = NULL;
 
-    //Schedule the next process to be executed
-    update_process_state_rr(proc_pcb, &freequeue, ST_ZOMBIE);
-    sched_next_rr();    
-
+    sched_next_rr();
 }
 
 //System gettime

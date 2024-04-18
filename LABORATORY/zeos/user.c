@@ -9,21 +9,24 @@ int __attribute__ ((__section__(".text.main")))
 main(void)
 {
     // Please modify this function with your desired user.c code
-    test_block();
+    test_exit_3();
     // NOP
-    while(1){}
+    while(1);
 }
 
-//SCHEDULE DOESNOT WORK!!!!
 inline void test_block(){
     int pid = fork();
-    if(pid == 0) block();
-    else{
-        while(1000000){
-            int a = 2;
-        }
+
+    if (pid == 0) block();
+    else {
         char * msg = "\n I'm the father and I'm going to unblock the shit out of my son";
         write(1, msg, strlen(msg));
+
+        for (unsigned int i = 0; i < 10000000; ++i)
+        {
+            char * msg = "";
+            write(1, msg, strlen(msg));
+        }
         unblock(pid);
     }
 
@@ -49,21 +52,6 @@ inline void test_numbros(){
 
         itodeca(numbros(), buff);
         write(1, buff, strlen(buff));    
-    }
-}
-
-inline void test_numsons2(){
-    
-    fork();
-    fork();
-    fork();
-    fork();
-    if(getpid() == 1){
-        char * msg = "\nThe number of sons of INIT process is ";
-        write(1, msg, strlen(msg));
-
-        itodeca(numsons(), buff);
-        write(1, buff, strlen(buff));
     }
 }
 
@@ -108,14 +96,12 @@ inline void test_task_switch(){
     // Check that the msg is printed every time we switch from IDLE to INIT
 }
 
-//THIS SHOULD RESTART THE COMPUTER (when doing set_CR3 on the task_switch)
 inline void test_exit(){
     char * msg = "\nI'm about to EXIT!";
     write(1, msg, strlen(msg));
     exit();
 }
 
-//There is a process, its  son, and grand-son
 inline void test_exit_2(){
     int son_pid = fork();
     if(son_pid == 0){
@@ -124,8 +110,7 @@ inline void test_exit_2(){
     } 
 
 
-    while(1){
-    }
+    while(1);
 }
 
 inline void test_exit_3(){
