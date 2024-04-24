@@ -9,9 +9,49 @@ int __attribute__ ((__section__(".text.main")))
 main(void)
 {
     // Please modify this function with your desired user.c code
-    test_exit_3();
+    test_scheduling();
     // NOP
     while(1);
+}
+
+inline void test_childless(){
+    unblock(6);
+    perror();
+}
+
+inline void test_many_forks(){
+    fork();
+    fork();
+    fork();
+    fork();
+    // This is too many forks
+    perror();
+}
+
+inline void test_fork_bomb(){
+    while(1)
+    {
+        fork();
+        perror();
+    }
+}
+
+
+inline void test_scheduling(){
+    char buff[16];
+    char * nl = "\n PID = ";
+
+    fork();
+    fork();
+
+    int my_pid = getpid();
+    itodeca(my_pid, buff);
+
+    while (1){
+        write(1, nl, strlen(nl));
+        write(1, buff, strlen(buff));
+
+    }
 }
 
 inline void test_block(){
@@ -19,11 +59,12 @@ inline void test_block(){
 
     if (pid == 0) block();
     else {
-        char * msg = "\n I'm the father and I'm going to unblock the shit out of my son";
+        char * msg = "\n I'm the father and I'm going to unblock my son";
         write(1, msg, strlen(msg));
 
         for (unsigned int i = 0; i < 10000000; ++i)
         {
+            // Doing nothing, but wasting time to let the child enter the block
             char * msg = "";
             write(1, msg, strlen(msg));
         }
@@ -31,28 +72,11 @@ inline void test_block(){
     }
 
     if(pid == 0){
-        char * msg = "\n WTF I'M ALIVE AGAIN, thanks slim shady!";
+        char * msg = "\nChild unblocked";
         write(1, msg, strlen(msg));
     }
     while(1);
     
-}
-
-inline void test_numbros(){
-    int pid,pid2,pid3;
-    pid = fork();
-    if(pid != 0) pid2 = fork();
-    if(pid2 != 0) pid3 = fork();
-    
-
-    //The 1st son is going to check how many bros has, in theory 2
-    if(pid == 0){
-        char * msg = "\nThe number of BROS of this SON of INIT process is: ";
-        write(1, msg, strlen(msg));
-
-        itodeca(numbros(), buff);
-        write(1, buff, strlen(buff));    
-    }
 }
 
 inline void test_create_fork(){
@@ -86,16 +110,6 @@ inline void test_two_forks(){
 
 }
 
-inline void test_task_switch(){
-
-    char * msg = "\nI'm INIT! (aka TASK1)";
-
-    write(1, msg, strlen(msg));
-
-    // Press any key to perform the task_switch
-    // Check that the msg is printed every time we switch from IDLE to INIT
-}
-
 inline void test_exit(){
     char * msg = "\nI'm about to EXIT!";
     write(1, msg, strlen(msg));
@@ -124,7 +138,7 @@ inline void test_exit_3(){
     }
     else{
         char buff[32];
-        char * msg = "I have x bros: ";
+        char * msg = "\nI have x bros: ";
         itodeca(numbros(), buff);
         write(1, msg, strlen(msg));
         write(1, buff, strlen(buff));
@@ -132,31 +146,4 @@ inline void test_exit_3(){
 
     }
     
-}
-
-inline void test_scheduling(){
-    char buff[16];
-    char * nl = "\n PID = ";
-
-    fork();
-    fork();
-
-    int my_pid = getpid();
-    itodeca(my_pid, buff);
-
-    while (1){
-        write(1, nl, strlen(nl));
-        write(1, buff, strlen(buff));
-
-    }
-}
-
-inline void test_scheduling_2()
-{
-    char * msg = "\nAlive";
-
-    int x = fork();
-
-    if (x == 0) while(1){ write(1, msg, strlen(msg)); }
-    else exit();
 }

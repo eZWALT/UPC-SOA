@@ -35,9 +35,6 @@ struct task_struct {
     int pending_unblocks;                  /* Number of pending unblocks left */ 
 };
 
-//This function is actually wrong, it should use exit on each children
-void kill_all_my_fucking_children(struct task_struct* process);
-
 //UNION (PCB + SYS STACK)
 union task_union {
   struct task_struct task;

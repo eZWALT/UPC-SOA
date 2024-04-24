@@ -7,17 +7,6 @@
 #include <mm.h>
 #include <io.h>
 
-/*
-//This function is actually wrong, it should use exit on each children
-void kill_all_my_fucking_children(struct task_struct* process){
-  struct list_head *son;
-  list_for_each(son, &process->sons){
-    list_del(son);
-    list_add_tail(son, &process->dead_sons);
-  }
-}
-*/
-
 //INITIALIZE THE DATA STRUCTURES DESCRIBED IN SCHED.H
 union task_union task[NR_TASKS]
   __attribute__((__section__(".data.task")));

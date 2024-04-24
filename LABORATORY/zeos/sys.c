@@ -170,7 +170,6 @@ int sys_fork()
     // Pointers in familiy tree
     child_pcb->parent = current();
     INIT_LIST_HEAD(&child_pcb->sons);
-    //The next line is kind of sus??? (MAKES SENSE BUT SHOULD BE REVISED)
     list_add_tail( &child_pcb->bros, &current()->sons);
 
     // return
@@ -245,7 +244,6 @@ int sys_unblock(int pid){
             //if son blocked, unblock it!
             if(son->state == ST_BLOCKED){
                 son->state = ST_READY;
-                //I'm not sure of the line below???
                 son->pending_unblocks = 0;
                 list_del(&(son->node));
                 list_add_tail(&(son->node), &readyqueue);
@@ -256,13 +254,13 @@ int sys_unblock(int pid){
         }
     }
     //If no son is found...
-    return -1;
+    return -ECHILD;
 }
 
 int sys_numsons(){
-    return list_size(&(current()->sons));
+    return list_size(&(current()->sons)) - 1;
 }
 
 int sys_numbros(){
-    return list_size(&(current()->bros));
+    return list_size(&(current()->bros)) - 1;
 }
