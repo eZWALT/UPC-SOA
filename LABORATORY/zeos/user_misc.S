@@ -211,3 +211,66 @@ ENTRY(numbros)
     push %ebp 
     movl %esp, %ebp 
     sysenter 
+
+ENTRY(read)
+    pushl %ebp 
+    movl %esp, %ebp 
+
+    pushl %ebx 
+    pushl %esi
+    pushl %edi 
+
+    movl 0x8(%ebp), %edx   # b*  
+    movl 0xc(%ebp), %ecx   # maxchars
+
+    movl $0x16, %eax 
+
+    pushl %ecx
+    pushl %edx 
+    pushl $sysenter_return 
+
+    push %ebp 
+    movl %esp, %ebp 
+    sysenter 
+
+ENTRY(gotoxy)
+    pushl %ebp 
+    movl %esp, %ebp 
+
+    pushl %ebx 
+    pushl %esi
+    pushl %edi 
+
+    movl 0x8(%ebp), %edx   # x
+    movl 0xc(%ebp), %ecx   # y
+
+    movl $0x16, %eax 
+
+    pushl %ecx
+    pushl %edx 
+    pushl $sysenter_return 
+
+    push %ebp 
+    movl %esp, %ebp 
+    sysenter 
+
+ENTRY(set_color)
+    pushl %ebp 
+    movl %esp, %ebp 
+
+    pushl %ebx 
+    pushl %esi
+    pushl %edi 
+
+    movl 0x8(%ebp), %edx   # fg  
+    movl 0xc(%ebp), %ecx   # bg
+
+    movl $0x16, %eax 
+
+    pushl %ecx
+    pushl %edx 
+    pushl $sysenter_return 
+
+    push %ebp 
+    movl %esp, %ebp 
+    sysenter 

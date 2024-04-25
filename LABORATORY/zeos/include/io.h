@@ -6,9 +6,11 @@
 #define __IO_H__
 
 #include <types.h>
-
+#include <circular.h>
 /** Screen functions **/
 /**********************/
+
+extern circular_buffer circular_buff;
 
 Byte inb (unsigned short port);
 void printc(char c);

@@ -9,7 +9,6 @@ int __attribute__ ((__section__(".text.main")))
 main(void)
 {
     // Please modify this function with your desired user.c code
-    test_scheduling();
     // NOP
     while(1);
 }

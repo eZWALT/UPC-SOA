@@ -257,10 +257,41 @@ int sys_unblock(int pid){
     return -ECHILD;
 }
 
+//Additional process syscalls
+
 int sys_numsons(){
     return list_size(&(current()->sons)) - 1;
 }
 
 int sys_numbros(){
     return list_size(&(current()->bros)) - 1;
+}
+
+//Videogame syscalls
+int sys_read(char* b, int maxchars){
+    int num_chars = 0;
+    for(int i = 0; i < maxchars; ++i){
+        
+    }
+}
+
+int sys_gotoxy(int x, int y){
+    return -ENOSYS;
+}
+
+int sys_set_color(int fg, int bg){
+    return -ENOSYS;
+}
+
+//Shared memory syscalls
+void* sys_shmat(int id, void* addr){
+    return -ENOSYS;
+}
+
+void sys_shmdt(void* addr){
+    return -ENOSYS;
+}
+
+int sys_shmrm(int id){
+    return -ENOSYS;
 }
