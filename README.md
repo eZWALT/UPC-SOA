@@ -34,24 +34,11 @@ make all install
 
 After installing all the environment, the kernel can be easily compiled using the Makefile provided and executed through bochs:
 ```console
-cd UPC-SOA/LABORATORY/zeos
+cd UPC-SOA/zeos
 make emul
 ```
 
 To execute the program using GDB, we provide ```make gdb``` in the Makefile.
-
-## Creators
-- Walter Troiani
-- Alexandre Ros
-
-Credits to Alex Pajuelo (Our "beloved" teacher of this subject) and to all the contributors that made ZeOS possible
- 
-## To be Implemented
-In a near future the docker image of ZeOS will be provided so the user can use the bochs interface easier without having to manually install BOCHS. Also some new features and syscalls are on the way:
-- [ ] getppid syscall
-- [ ] wait syscall
-- [ ] waitpid syscall
-- [ ] exec syscall 
 
 ## License
 This project is licensed under the GNU General Public License (GPL) version 3.0, allowing you to freely use, modify, and distribute this software under the terms of the GPL.

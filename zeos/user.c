@@ -10,6 +10,7 @@ main(void)
 {
     // Please modify this function with your desired user.c code
     // NOP
+    test_scheduling();
     while(1);
 }
 

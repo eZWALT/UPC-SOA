@@ -10,8 +10,6 @@
 /** Screen functions **/
 /**********************/
 
-extern circular_buffer circular_buff;
-
 Byte inb (unsigned short port);
 void printc(char c);
 void printc_xy(Byte x, Byte y, char c);

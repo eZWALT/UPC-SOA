@@ -1,16 +1,5 @@
-#ifndef CIRCULAR_HH
-#define CIRCULAR_HH 
+#include <circular.h>
 
-#define MAX_BUFF_SIZE 32
-
-typedef struct{
-    char keys[MAX_BUFF_SIZE];
-    int write_idx;
-    int read_idx;
-    int size;
-} circular_buffer;
-
-//Constructor
 void init(circular_buffer* crc_bff){
     crc_bff->write_idx = 0;
     crc_bff->read_idx = 0;
@@ -29,8 +18,7 @@ int size(circular_buffer* crc_bff){
     return crc_bff->size;
 }
 
-//Bolean function, returns 0 if it wasn't possible
-int put (circular_buffer* crc_bff, int item)
+int put(circular_buffer* crc_bff, char item)
 {
     //Buffer is full and blocked
     if(is_full(crc_bff)){
@@ -55,4 +43,3 @@ int get(circular_buffer* crc_bff, char * ret_value){
     }
 }
 
-#endif

@@ -18,6 +18,7 @@ int zeos_ticks = 0;
 
 Gate idt[IDT_ENTRIES];
 Register    idtR;
+circular_buffer cbuff;
 
 char char_map[] =
 {
@@ -108,6 +109,11 @@ void setIdt()
     set_idt_reg(&idtR);
 }
 
+void initCircBuff()
+{
+    init(&cbuff);
+}
+
 void clk_routine(){
     ++zeos_ticks;
     zeos_show_clock();
@@ -124,8 +130,8 @@ void kbd_routine(){
     //Maybe scan_code should be checked
     if(!is_break){
         char character = char_map[scan_code];
-        put(&circular_buff, character);
-        if(!is_full(&circular_buff)){
+        put(&cbuff, character);
+        if(!is_full(&cbuff)){
             printk(character);
         }
         //printc_xy(0x00, 0x00, char_map[scan_code]);
