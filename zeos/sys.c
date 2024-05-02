@@ -4,11 +4,13 @@
 #include <devices.h>
 #include <utils.h>
 #include <io.h>
+#include <interrupt.h>
 #include <mm.h>
 #include <mm_address.h>
 #include <sched.h>
 #include <errno.h>
 #include <types.h>
+#include <colors.h>
 
 #define LECTURA 0
 #define ESCRIPTURA 1
@@ -269,26 +271,51 @@ int sys_numbros(){
 
 //Videogame syscalls
 int sys_read(char* b, int maxchars){
-    int num_chars = 0;
-    for(int i = 0; i < maxchars; ++i){
-        
+    unsigned int num_chars = 0;
+    unsigned int index = 0;
+    unsigned int num_reads = 0;
+    char kern_buff[MAX_BUFFER_SIZE];
+
+    //Check if buffer is not null or smaller than maxchars
+    if (!access_ok(VERIFY_READ, b, maxchars)) return -EFAULT; /* EFAULT */
+
+    while(!is_empty(&cbuff)){
+        get(&cbuff, &kern_buff[num_chars]);
+        ++num_chars;        
+        ++index;
+
+        //
+        if(index == MAX_BUFFER_SIZE){
+            index = 0;
+            copy_to_user(&kern_buff[num_reads * MAX_BUFFER_SIZE], &b[num_reads * MAX_BUFFER_SIZE], MAX_BUFFER_SIZE);
+            ++num_reads;
+        }
     }
+    //Remaining characters
+    if(index != 0) copy_to_user(&kern_buff[num_reads * MAX_BUFFER_SIZE], &b[num_reads * MAX_BUFFER_SIZE], index);
+    return num_chars;
 }
 
 int sys_gotoxy(int x, int y){
-    return -ENOSYS;
+    if(x >= SCREEN_COLUMNS || x < 0 || y >= SCREEN_ROWS || y < 0) return -EOUTSCREEN;
+    x_screen = x;
+    y_screen = y;
+    return 1;
 }
 
 int sys_set_color(int fg, int bg){
-    return -ENOSYS;
+    if(fg > WHITE || fg < BLACK || bg > WHITE || bg < BLACK) return -ENOCOLOR;
+    fg_color = fg;
+    bg_color = bg;
+    return 1;
 }
 
 //Shared memory syscalls
 void* sys_shmat(int id, void* addr){
-    return -ENOSYS;
+    return (void*) 0xFFFF;
 }
 
-void sys_shmdt(void* addr){
+int sys_shmdt(void* addr){
     return -ENOSYS;
 }
 

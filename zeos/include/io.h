@@ -7,6 +7,11 @@
 
 #include <types.h>
 #include <circular.h>
+
+extern Byte x_screen;
+extern Byte y_screen;
+extern Byte fg_color;
+extern Byte bg_color;
 /** Screen functions **/
 /**********************/
 

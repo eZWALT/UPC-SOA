@@ -43,3 +43,8 @@
 #define	ENOSYS		40	/* Function not implemented (88 in Cyg?) */
 #define	ENOTEMPTY	41	/* Directory not empty (90 in Cyg?) */
 #define	EILSEQ		42	/* Illegal byte sequence */
+
+
+/*Videogame Errors*/
+#define EOUTSCREEN 43
+#define ENOCOLOR 44

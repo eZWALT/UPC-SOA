@@ -223,7 +223,7 @@ ENTRY(read)
     movl 0x8(%ebp), %edx   # b*  
     movl 0xc(%ebp), %ecx   # maxchars
 
-    movl $0x16, %eax 
+    movl $0x03, %eax 
 
     pushl %ecx
     pushl %edx 
@@ -244,7 +244,7 @@ ENTRY(gotoxy)
     movl 0x8(%ebp), %edx   # x
     movl 0xc(%ebp), %ecx   # y
 
-    movl $0x16, %eax 
+    movl $0x0B, %eax 
 
     pushl %ecx
     pushl %edx 
@@ -265,7 +265,7 @@ ENTRY(set_color)
     movl 0x8(%ebp), %edx   # fg  
     movl 0xc(%ebp), %ecx   # bg
 
-    movl $0x16, %eax 
+    movl $0x0C, %eax 
 
     pushl %ecx
     pushl %edx 

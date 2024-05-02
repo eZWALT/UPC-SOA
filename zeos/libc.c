@@ -40,6 +40,12 @@ void perror(){
     case ECHILD:
       strcpy(error_msg,"\nECHILD: We're childless\n");
       break;
+    case ENOCOLOR:
+      strcpy(error_msg, "\nENOCOLOR: Trying to set an invalid color! (4-bit color scale)\n");
+      break;
+    case EOUTSCREEN:
+      strcpy(error_msg, "\nEOUTSCREEN: Trying to set an invalid position! (80 columns and 25 rows)\n");
+      break;
     default:
       strcpy(error_msg,"\nUnknown error\n");
       break;

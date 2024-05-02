@@ -1,17 +1,32 @@
 #include <libc.h>
 #include <list.h>
-
-char buff[24];
+#include <colors.h>
 
 int pid;
 
+int print(char * xd){
+    write(1, xd, strlen(xd));
+    return 1;
+}
 int __attribute__ ((__section__(".text.main")))
 main(void)
 {
     // Please modify this function with your desired user.c code
     // NOP
-    test_scheduling();
+    test_color_position();
     while(1);
+}
+
+
+inline void test_color_position(){
+    set_color(RED, BLUE);
+    gotoxy(70,10);
+    char * buff = "FUCK OFF";
+    print(buff);
+    perror();
+}
+inline void test_read(){
+    
 }
 
 inline void test_childless(){
