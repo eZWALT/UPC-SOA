@@ -13,7 +13,7 @@ main(void)
 {
     // Please modify this function with your desired user.c code
     // NOP
-    test_color_position();
+    test_read();
     while(1);
 }
 
@@ -25,8 +25,16 @@ inline void test_color_position(){
     print(buff);
     perror();
 }
+
 inline void test_read(){
-    
+    char rd_buff[16];
+    char buff[16];
+
+    while (1)
+    {
+        int nc_rd = read(rd_buff, 16);
+        write(1, rd_buff, nc_rd);
+    }
 }
 
 inline void test_childless(){

@@ -131,14 +131,8 @@ void kbd_routine(){
     if(!is_break){
         char character = char_map[scan_code];
         put(&cbuff, character);
-        if(!is_full(&cbuff)){
-            printk(character);
-        }
         //printc_xy(0x00, 0x00, char_map[scan_code]);
-;
     }
-
-
 }
 
 void pgf_routine()
