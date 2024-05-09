@@ -274,3 +274,64 @@ ENTRY(set_color)
     push %ebp 
     movl %esp, %ebp 
     sysenter 
+
+ENTRY(shmat)
+    pushl %ebp 
+    movl %esp, %ebp 
+
+    pushl %ebx 
+    pushl %esi
+    pushl %edi 
+
+    movl 0x8(%ebp), %edx   # int id 
+    movl 0xc(%ebp), %ecx   # void* addr
+
+    movl $0x0F, %eax 
+
+    pushl %ecx
+    pushl %edx 
+    pushl $sysenter_return 
+
+    push %ebp 
+    movl %esp, %ebp 
+    sysenter 
+
+ENTRY(shmdt)
+    pushl %ebp 
+    movl %esp, %ebp 
+
+    pushl %ebx 
+    pushl %esi
+    pushl %edi 
+
+    movl 0x8(%ebp), %edx   # addr 
+
+    movl $0x10, %eax 
+
+    pushl %ecx
+    pushl %edx 
+    pushl $sysenter_return 
+
+    push %ebp 
+    movl %esp, %ebp 
+    sysenter 
+
+ENTRY(shmrm)
+    pushl %ebp 
+    movl %esp, %ebp 
+
+    pushl %ebx 
+    pushl %esi
+    pushl %edi 
+
+    movl 0x8(%ebp), %edx   # id 
+
+    movl $0x11, %eax 
+
+    pushl %ecx
+    pushl %edx 
+    pushl $sysenter_return 
+
+    push %ebp 
+    movl %esp, %ebp 
+    sysenter 

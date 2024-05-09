@@ -48,3 +48,5 @@
 /*Videogame Errors*/
 #define EOUTSCREEN 43
 #define ENOCOLOR 44
+
+#define ENOSHR 45

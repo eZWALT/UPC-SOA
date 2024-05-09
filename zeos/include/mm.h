@@ -12,10 +12,14 @@
  
 #define FREE_FRAME 0
 #define USED_FRAME 1
+#define NUM_SHARED_PAGES 10
+
 /* Bytemap to mark the free physical pages */
 extern Byte phys_mem[TOTAL_PAGES];
 
 
+
+extern SharedPage shared_pages[NUM_SHARED_PAGES];
 extern page_table_entry dir_pages[NR_TASKS][TOTAL_PAGES];
 
 int init_frames( void );
@@ -23,12 +27,15 @@ int alloc_frame( void );
 void free_frame( unsigned int frame );
 void set_user_pages( struct task_struct *task );
 void free_user_pages( struct task_struct *task );
+int get_user_free_page( struct task_struct *task );
+int is_frame_shared( unsigned int frame );
 
 extern Descriptor  *gdt;
 
 extern TSS         tss; 
 
 void init_mm();
+void init_shared_pages();
 void set_cr3(page_table_entry *dir);
 
 void setGdt();

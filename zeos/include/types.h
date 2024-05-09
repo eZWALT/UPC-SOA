@@ -18,6 +18,13 @@ typedef unsigned long       DWord;
 #define highByte(address) (Byte)(((address) >> (16 + 8)) & 0xFF)
 #define high4Bits(limit) (Byte)(((limit) >> 16) & 0x0F)
 
+typedef struct
+{
+  int   frame;
+  int   num_refs;
+  int   to_clear;
+} SharedPage;
+
 typedef struct  /* Segment Descriptor */
 {
   Word  limit;

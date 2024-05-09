@@ -8,7 +8,6 @@
 
 #include <stats.h>
 
-
 //string utils
 void itodeca(int a, char *b);
 void itohexa(int a, char *b);
