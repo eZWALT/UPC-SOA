@@ -134,8 +134,14 @@ int sys_fork()
 
     /* DATA */
 
-    // KERNEL (256) + (NUM_PAG_DATA + NUM_PAG_CODE) | --> FREE
-    for (pag=0; pag < NUM_PAG_DATA; pag++){
+    // Reserve 20 free logical pages for the parent
+    int free_pt_pages[NUM_PAG_DATA];
+
+    for (int pag = 0; pag < NUM_PAG_DATA; ++pag)
+    {
+        free_pt_pages[pag] = get_user_free_page(current());
+        if (free_pt_pages[pag] < 0) return -ENOMEM;
+
         new_ph_pag = alloc_frame();
 
         if (new_ph_pag < 0) {
@@ -143,15 +149,18 @@ int sys_fork()
             return -ENOMEM;
         }
 
-        int free_parent_pag = get_user_free_page(current());
-        if (free_parent_pag < 0) return -ENOMEM;
-
-        set_ss_pag(pt_parent, free_parent_pag, new_ph_pag);
+        set_ss_pag(pt_parent, free_pt_pages[pag], new_ph_pag);
         set_ss_pag(pt_child, USER_FIRST_PAGE + pag, new_ph_pag);
+    }
 
-        copy_data((void *)((USER_FIRST_PAGE + pag) << 12), (void *)(free_parent_pag << 12), PAGE_SIZE);
+    set_cr3(get_DIR(current()));
 
-        del_ss_pag(pt_parent, free_parent_pag);
+    // KERNEL (256) + (NUM_PAG_DATA + NUM_PAG_CODE) | --> FREE
+    for (pag=0; pag < NUM_PAG_DATA; pag++){
+
+        copy_data((void *)((USER_FIRST_PAGE + pag) << 12), (void *)(free_pt_pages[pag] << 12), PAGE_SIZE);
+
+        del_ss_pag(pt_parent, free_pt_pages[pag]);
     }
 
     // Flush of the Translation Lookaside Buffer
@@ -336,9 +345,11 @@ void* sys_shmat(int id, void* addr){
     }
 
     set_ss_pag(proc_tp, addr_page, shared_pages[id].frame);
+    set_cr3(get_DIR(current()));
+
     ++shared_pages[id].num_refs;
     
-    return ((void *) (addr_page >> 12));
+    return ((void *) (addr_page << 12));
 }
 
 int sys_shmdt(void* addr){
@@ -350,7 +361,7 @@ int sys_shmdt(void* addr){
 
     if (is_logic_page_free(proc_tp, addr_page)) return -ENOSHR;
 
-    unsigned frame = proc_tp[addr_page].entry;
+    unsigned frame = proc_tp[addr_page].bits.pbase_addr;
     if (is_frame_shared(frame))
     {        
         int idx = 0;
@@ -358,22 +369,23 @@ int sys_shmdt(void* addr){
             if (shared_pages[idx].frame == frame) break;
         }
         --shared_pages[idx].num_refs;
-        if(shared_pages[idx].num_refs == 0) sys_shmrm(idx);
+        if(shared_pages[idx].num_refs == 0 && shared_pages[idx].to_clear == 1) sys_shmrm(idx);
         del_ss_pag(proc_tp, addr_page);
+        set_cr3(get_DIR(current()));
 
     }
     else return -ENOSHR;
+
 
     return 0;
 }
 
 int sys_shmrm(int id){
-    /*if (shared_pages[id].num_refs == 0){
-        // Zero out the region
+    shared_pages[idx].to_clear == 1;
 
-    }
-    else {
-        shared_pages[id].num_refs
-    }*/
+    return 0;
+}
 
+void zero_out_page(){
+    
 }

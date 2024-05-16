@@ -12,9 +12,49 @@ int print(char* xd) {
 int __attribute__((__section__(".text.main"))) main(void) {
     // Please modify this function with your desired user.c code
     // NOP
-    fork();
+    test_shmdt();
     while (1)
         ;
+}
+
+inline void test_shmat() 
+{
+    int f = fork();
+    
+    if (f != 0)
+    {
+        void * addr = shmat(6, (void*) 0x11C000);
+        int * int_addr = (int *) addr;
+        (*int_addr) = 1984;
+        unblock(f);
+    }
+    else
+    {
+        block();
+        void * addr = shmat(6, (void*) 0x11C000);
+        int * int_addr = (int *) addr;
+        char buff[10];
+        itodeca((*int_addr), buff);
+        print(buff);
+    }
+
+}
+
+inline void test_shmrm(){
+    
+}
+
+inline void test_shmdt(){
+
+    void * addr = shmat(6, (void*) 0x11C000);
+    int * int_addr = (int *) addr;
+    (*int_addr) = 1984;
+    
+    shmdt((void *) 0x11C000);
+    //This store would generate a page fault exception
+    //(*int_addr) = 1312;
+
+    perror();
 }
 
 inline void test_color_position() {
