@@ -255,7 +255,7 @@ int get_user_free_page( struct task_struct *task ){
     /* Find the free page, return -1 if not found */
     for (pag = USER_LAST_PAGE; pag < TOTAL_PAGES; ++pag)
     {
-        if (process_PT[logical_page].entry == 0) return pag;
+        if (process_PT[pag].entry == 0) return pag;
     }
 
     return -1; // ENOMEM

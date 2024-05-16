@@ -12,7 +12,7 @@ int print(char* xd) {
 int __attribute__((__section__(".text.main"))) main(void) {
     // Please modify this function with your desired user.c code
     // NOP
-    test_read_with_sched();
+    fork();
     while (1)
         ;
 }

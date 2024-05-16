@@ -149,7 +149,7 @@ int sys_fork()
         set_ss_pag(pt_parent, free_parent_pag, new_ph_pag);
         set_ss_pag(pt_child, USER_FIRST_PAGE + pag, new_ph_pag);
 
-        copy_data((void *)((USER_FIRST_PAGE + pag) << 12), (void *)((USER_LAST_PAGE + pag) << 12), PAGE_SIZE);
+        copy_data((void *)((USER_FIRST_PAGE + pag) << 12), (void *)(free_parent_pag << 12), PAGE_SIZE);
 
         del_ss_pag(pt_parent, free_parent_pag);
     }
