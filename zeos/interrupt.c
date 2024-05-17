@@ -137,7 +137,7 @@ void kbd_routine(){
 
 void pgf_routine()
 {	
-	char * buf[16];
+	char buf[16];
 	char * mesg = "\nProcess generates a PAGE FAULT exception at %eip = 0x";
 
 	int pf_offender;

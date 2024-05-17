@@ -33,6 +33,8 @@ struct task_struct {
     unsigned int nr_ticks;                 /* Number of ticks process has spent using CPU */
     unsigned int quantum;                  /* CPU Quantum */
     int pending_unblocks;                  /* Number of pending unblocks left */ 
+
+    unsigned int sh_mem_pages[10];         /* Vector of all used shared memory pages (0 if not in use) */
 };
 
 //UNION (PCB + SYS STACK)

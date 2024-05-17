@@ -122,7 +122,7 @@ int sys_fork()
     page_table_entry* pt_child  = get_PT(child_pcb);
     page_table_entry* pt_parent = get_PT(current());
 
-    int new_ph_pag, old_ph_pag, pag;
+    int new_ph_pag, pag;
 
     /* KERNEL */
     for (pag=0; pag < NUM_PAG_KERNEL; pag++) 
@@ -179,7 +179,7 @@ int sys_fork()
     child_union->stack[KERNEL_STACK_SIZE - 19] = 0;
 
     // Update kernel_esp
-    child_pcb->kernel_esp0 = (unsigned long *) &child_union->stack[KERNEL_STACK_SIZE - 19];
+    child_pcb->kernel_esp0 = (long unsigned int) &child_union->stack[KERNEL_STACK_SIZE - 19];
 
     // Pointers in familiy tree
     child_pcb->parent = current();
@@ -200,10 +200,6 @@ void sys_exit()
 
     proc_pcb->PID = -1;
 
-    //char buff[64];
-    //itodeca(list_size(&proc_pcb->sons), buff);
-    //printk(buff);
-
     struct list_head * e, *tmp;
 
     for (int i = 0; i < NR_TASKS; ++i)
@@ -215,6 +211,20 @@ void sys_exit()
         list_add_tail(&task[i].task.bros, &idle_task->sons);
     }
 
+    //Free the references of shared pages
+    for (int idx = 0; idx < NUM_SHARED_PAGES; ++idx)
+    {
+        if (proc_pcb->sh_mem_pages[idx] != 0)
+        {
+            // The page was being used 
+            --shared_pages[idx].num_refs;
+            if(shared_pages[idx].num_refs == 0 && shared_pages[idx].to_clear == 1) 
+                zero_out_page(proc_pcb->sh_mem_pages[idx]);
+            
+            del_ss_pag(get_PT(proc_pcb), proc_pcb->sh_mem_pages[idx]);
+            proc_pcb->sh_mem_pages[idx] = 0;
+        }
+    }
 
     //Schedule the next process to be executed
     update_process_state_rr(proc_pcb, &freequeue, ST_ZOMBIE);
@@ -322,7 +332,7 @@ int sys_set_color(int fg, int bg){
 }
 
 void* sys_shmat(int id, void* addr){
-    if (id < 0 || id > 9) return -ENOSHR;
+    if (id < 0 || id > 9) return (void*) -ENOSHR;
 
     unsigned int addr_page;
     page_table_entry * proc_tp = get_PT(current());
@@ -330,20 +340,21 @@ void* sys_shmat(int id, void* addr){
     if (addr == NULL)
     {
         addr_page = get_user_free_page(current());
-        if (addr_page == -1) return -ENOMEM;
+        if (addr_page == -1) return (void*) -ENOMEM;
     }
     else 
     {
-        if (((unsigned int) addr) % PAGE_SIZE != 0) return -EFAULT;    
+        if (((unsigned int) addr) % PAGE_SIZE != 0) return (void*) -EFAULT;    
 
         addr_page = ((unsigned int) addr) >> 12;
         if (!is_logic_page_free(proc_tp, addr_page)) 
         {
             addr_page = get_user_free_page(current());
-            if (addr_page == -1) return -ENOMEM;
+            if (addr_page == -1) return (void*) -ENOMEM;
         }
     }
 
+    current()->sh_mem_pages[id] = addr_page; // Register new shared page
     set_ss_pag(proc_tp, addr_page, shared_pages[id].frame);
     set_cr3(get_DIR(current()));
 
@@ -369,7 +380,9 @@ int sys_shmdt(void* addr){
             if (shared_pages[idx].frame == frame) break;
         }
         --shared_pages[idx].num_refs;
-        if(shared_pages[idx].num_refs == 0 && shared_pages[idx].to_clear == 1) sys_shmrm(idx);
+        if(shared_pages[idx].num_refs == 0 && shared_pages[idx].to_clear == 1) zero_out_page(addr_page);
+        
+        current()->sh_mem_pages[idx] = 0; // Set to 0 shared page id
         del_ss_pag(proc_tp, addr_page);
         set_cr3(get_DIR(current()));
 
@@ -381,11 +394,17 @@ int sys_shmdt(void* addr){
 }
 
 int sys_shmrm(int id){
-    shared_pages[idx].to_clear == 1;
+    shared_pages[id].to_clear = 1;
 
     return 0;
 }
 
-void zero_out_page(){
-    
+// Fill with zeros the logical page
+void zero_out_page(int page)
+{
+    char * addr_page = (void *) PH_PAGE(page);
+    for (int i = 0; i < PAGE_SIZE; ++i)
+        addr_page[i] = 0x00;
+
+    return;
 }

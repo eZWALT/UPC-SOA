@@ -18,7 +18,9 @@ OBJCOPY = objcopy -O binary -R .note -R .comment -S
 INCLUDEDIR = include
 
 
-CFLAGS = -m32 -O2  -g -fno-omit-frame-pointer -ffreestanding -Wall -I$(INCLUDEDIR) -fno-PIC -fno-stack-protector -fno-tree-vectorize
+CFLAGS = -m32 -O2  -g -fno-omit-frame-pointer -ffreestanding -Wall -I$(INCLUDEDIR) -fno-PIC -fno-stack-protector \
+		 -fno-tree-vectorize -Wno-int-conversion -Wno-implicit-function-declaration
+
 ASMFLAGS = -I$(INCLUDEDIR)
 LDFLAGS = -g -melf_i386 --wrap=page_fault_handler
 

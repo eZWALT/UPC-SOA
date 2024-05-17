@@ -29,6 +29,7 @@ void set_user_pages( struct task_struct *task );
 void free_user_pages( struct task_struct *task );
 int get_user_free_page( struct task_struct *task );
 int is_frame_shared( unsigned int frame );
+int is_logic_page_free(page_table_entry* PT, unsigned page);
 
 extern Descriptor  *gdt;
 

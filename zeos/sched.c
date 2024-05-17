@@ -108,6 +108,9 @@ void init_task1(void)
 	task1_pcb->state = ST_RUN;
     task1_pcb->pending_unblocks = 0;
 
+    // Not using shared memory yet
+    for (int i = 0; i < NUM_SHARED_PAGES; ++i) task1_pcb->sh_mem_pages[i] = 0;
+
 	//Initialize the lists of brothers  and sons 
 	INIT_LIST_HEAD(&task1_pcb->sons);
 
