@@ -15,6 +15,7 @@
 #define LECTURA 0
 #define ESCRIPTURA 1
 #define MAX_BUFFER_SIZE 512
+#define USE_COW 1
 
 char kern_buff[MAX_BUFFER_SIZE];
 
@@ -133,35 +134,44 @@ int sys_fork()
         pt_child[PAG_LOG_INIT_CODE+pag] = pt_parent[PAG_LOG_INIT_CODE+pag];
 
     /* DATA */
-
-    // Reserve 20 free logical pages for the parent
     int free_pt_pages[NUM_PAG_DATA];
-
-    for (int pag = 0; pag < NUM_PAG_DATA; ++pag)
-    {
-        free_pt_pages[pag] = get_user_free_page(current());
-        if (free_pt_pages[pag] < 0) return -ENOMEM;
-
-        new_ph_pag = alloc_frame();
-
-        if (new_ph_pag < 0) {
-            free_user_pages(child_pcb);
-            return -ENOMEM;
+    if(USE_COW){
+        for (int pag = 0; pag < NUM_PAG_DATA; ++pag){
+            pt_child[pag] = pt_parent[pag];
+            pt_child[pag].rw = 0;
+            pt_child[pag].num_refs++???
         }
 
-        set_ss_pag(pt_parent, free_pt_pages[pag], new_ph_pag);
-        set_ss_pag(pt_child, USER_FIRST_PAGE + pag, new_ph_pag);
+    }
+    else{
+        // Reserve NUM_PAG_DATA free logical pages for the parent
+        for (int pag = 0; pag < NUM_PAG_DATA; ++pag)
+        {
+            free_pt_pages[pag] = get_user_free_page(current());
+            if (free_pt_pages[pag] < 0) return -ENOMEM;
+
+            new_ph_pag = alloc_frame();
+
+            if (new_ph_pag < 0) {
+                free_user_pages(child_pcb);
+                return -ENOMEM;
+            }
+
+            set_ss_pag(pt_parent, free_pt_pages[pag], new_ph_pag);
+            set_ss_pag(pt_child, USER_FIRST_PAGE + pag, new_ph_pag);
+        }
+
+        set_cr3(get_DIR(current()));
+        // KERNEL (256) + (NUM_PAG_DATA + NUM_PAG_CODE) | --> FREE
+        for (pag=0; pag < NUM_PAG_DATA; pag++){
+
+            copy_data((void *)((USER_FIRST_PAGE + pag) << 12), (void *)(free_pt_pages[pag] << 12), PAGE_SIZE);
+
+            del_ss_pag(pt_parent, free_pt_pages[pag]);
+        }
     }
 
-    set_cr3(get_DIR(current()));
 
-    // KERNEL (256) + (NUM_PAG_DATA + NUM_PAG_CODE) | --> FREE
-    for (pag=0; pag < NUM_PAG_DATA; pag++){
-
-        copy_data((void *)((USER_FIRST_PAGE + pag) << 12), (void *)(free_pt_pages[pag] << 12), PAGE_SIZE);
-
-        del_ss_pag(pt_parent, free_pt_pages[pag]);
-    }
 
     // Flush of the Translation Lookaside Buffer
     set_cr3(get_DIR(current()));

@@ -7,6 +7,7 @@
 #include <hardware.h>
 #include <io.h>
 #include <libc.h>
+#include <mm.h>
 
 //importing INITIAL_ESP (which is the kernel initial ESP)
 #include <sched.h>
@@ -135,21 +136,30 @@ void kbd_routine(){
     }
 }
 
+//si el num refs es 1 eres el unico que tiene esa pagina lo unico que tienes entonces solo cambias los bits de proteccion
 void pgf_routine()
 {	
 	char buf[16];
 	char * mesg = "\nProcess generates a PAGE FAULT exception at %eip = 0x";
 
 	int pf_offender;
-	
 	asm("\t movl %%eax, %0" : "=r"(pf_offender));
-	
-	itohexa(pf_offender, buf);
-	strcat(mesg, buf);
-	
-	printk(mesg);
-	
-	while (1) {};
+    pf_offender = PH_PAGE(pf_offender);
+    page_table_entry* pt = get_PT(current());
+    
+    if(is_cow_page(pt, (unsigned int) pf_offender)){
+        //Magically copy a page
+                
+    }
+    else{
+        itohexa(pf_offender, buf);
+        strcat(mesg, buf);
+        
+        printk(mesg);
+        
+        while (1) {};
+    }
+
 }
 
 // SYSENTER MSRs:  CS (0x174),  ESP(0x175), @handler/EIP (0x176). SYSENTER pone los bits de privilege level PSW a 00

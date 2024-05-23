@@ -283,3 +283,8 @@ void del_ss_pag(page_table_entry *PT, unsigned logical_page) {
 unsigned int get_frame(page_table_entry *PT, unsigned int logical_page) {
     return PT[logical_page].bits.pbase_addr;
 }
+
+//If entry == 0 then the page is empty
+int is_cow_page(page_table_entry* pte, unsigned page){
+    return pte[page].entry != 0 && pte[page].rw == 0;   
+}
