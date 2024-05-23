@@ -12,7 +12,7 @@ int print(char* xd) {
 int __attribute__((__section__(".text.main"))) main(void) {
     // Please modify this function with your desired user.c code
     // NOP
-    test_shmrm();
+    test_shmat();
     while (1)
         ;
 }
@@ -22,23 +22,18 @@ inline void test_shmrm(){
     
     if (f != 0)
     {
-        void * addr = shmat(8, (void*) 0x11C000);
-        int * int_addr = (int *) addr;
-        (*int_addr) = 1984;
+        char * addr = (char *) shmat(8, (void*) 0x11C000);
+        strcpy(addr, "\n\nThe Industrial Revolution and its consequences have been a disaster for the\nhuman race.");
         shmrm(8);
-        // Any of the two calls fail with page fault.
-        //shmdt(addr);
-        //exit();        
+        shmdt(addr);
         unblock(f);
+        //exit();
     }
     else
     {
         block();
-        void * addr = shmat(8, (void*) 0x11C000);
-        int * int_addr = (int *) addr;
-        char buff[10];
-        itodeca((*int_addr), buff);
-        print(buff);
+        char * addr = (char *) shmat(8, (void*) 0x11C000);
+        print(addr);
     }
 
 }
@@ -46,39 +41,24 @@ inline void test_shmrm(){
 
 inline void test_shmat() 
 {
+    set_color(WHITE, BLACK);
     int f = fork();
     
     if (f != 0)
     {
-        void * addr = shmat(6, (void*) 0x11C000);
-        int * int_addr = (int *) addr;
-        (*int_addr) = 1984;
+        char * addr = (char *) shmat(6, (void*) 0x11C000);
+        strcpy(addr, "\n\nThe Industrial Revolution and its consequences have been a disaster for the\nhuman race.");
         unblock(f);
     }
     else
     {
         block();
-        void * addr = shmat(6, (void*) 0x11C000);
-        int * int_addr = (int *) addr;
-        char buff[10];
-        itodeca((*int_addr), buff);
-        print(buff);
+        char * addr = (char *) shmat(6, (void*) 0x11C000);
+        print(addr);
     }
 
 }
 
-inline void test_shmdt(){
-
-    void * addr = shmat(6, (void*) 0x11C000);
-    int * int_addr = (int *) addr;
-    (*int_addr) = 1984;
-    
-    shmdt((void *) 0x11C000);
-    //This store would generate a page fault exception
-   // (*int_addr) = 1312;
-
-    perror();
-}
 
 inline void test_color_position() {
     set_color(RED, BLUE);

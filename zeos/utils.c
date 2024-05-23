@@ -18,6 +18,23 @@ void copy_data(void *start, void *dest, int size)
     size --;
   }
 }
+
+// Fill with zeroes the entire memory block
+void zero_out(void *dest, int size)
+{
+  DWord *q = dest;
+  Byte *q1;
+  while(size > 4) {
+    *q++ = 0;
+    size -= 4;
+  }
+  q1=(Byte*)q;
+  while(size > 0) {
+    *q1++ = 0;
+    size --;
+  }
+}
+
 /* Copia de espacio de usuario a espacio de kernel, devuelve 0 si ok y -1 si error*/
 int copy_from_user(void *start, void *dest, int size)
 {

@@ -219,7 +219,7 @@ void sys_exit()
             // The page was being used 
             --shared_pages[idx].num_refs;
             if(shared_pages[idx].num_refs == 0 && shared_pages[idx].to_clear == 1) 
-                zero_out_page(proc_pcb->sh_mem_pages[idx]);
+                zero_out(proc_pcb->sh_mem_pages[idx] << 12, PAGE_SIZE);
             
             del_ss_pag(get_PT(proc_pcb), proc_pcb->sh_mem_pages[idx]);
             proc_pcb->sh_mem_pages[idx] = 0;
@@ -380,7 +380,7 @@ int sys_shmdt(void* addr){
             if (shared_pages[idx].frame == frame) break;
         }
         --shared_pages[idx].num_refs;
-        if(shared_pages[idx].num_refs == 0 && shared_pages[idx].to_clear == 1) zero_out_page(addr_page);
+        if(shared_pages[idx].num_refs == 0 && shared_pages[idx].to_clear == 1) zero_out(addr, PAGE_SIZE);
         
         current()->sh_mem_pages[idx] = 0; // Set to 0 shared page id
         del_ss_pag(proc_tp, addr_page);
@@ -400,11 +400,11 @@ int sys_shmrm(int id){
 }
 
 // Fill with zeros the logical page
-void zero_out_page(int page)
-{
-    char * addr_page = (void *) PH_PAGE(page);
-    for (int i = 0; i < PAGE_SIZE; ++i)
-        addr_page[i] = 0x00;
-
-    return;
-}
+//void zero_out_page(int page)
+//{
+//    char * addr_page = (char *) PH_PAGE(page);
+//    for (int i = 0; i < PAGE_SIZE; ++i)
+//        addr_page[i] = 0x00;
+//
+//    return;
+//}
