@@ -199,7 +199,7 @@ int init_frames(void) {
     }
     /* Mark kernel pages as Used */
     for (i = 0; i < NUM_PAG_KERNEL; i++) {
-        phys_mem[i] = USED_FRAME;
+        phys_mem[i]++;
     }
     return 0;
 }
@@ -211,7 +211,7 @@ int alloc_frame(void) {
     int i;
     for (i = NUM_PAG_KERNEL; i < TOTAL_PAGES;) {
         if (phys_mem[i] == FREE_FRAME) {
-            phys_mem[i] = USED_FRAME;
+            phys_mem[i]++; // Increment number of references to phys_mem
             return i;
         }
         i += 2; /* NOTE: There will be holes! This is intended.
@@ -235,7 +235,7 @@ void free_user_pages(struct task_struct *task) {
 void free_frame(unsigned int frame) 
 {
     if ((frame > NUM_PAG_KERNEL) && (frame < TOTAL_PAGES))
-        phys_mem[frame] = FREE_FRAME;
+        phys_mem[frame]--; // Free one reference to the frame
 }
 
 int is_frame_shared(unsigned int frame)

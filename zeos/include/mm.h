@@ -11,13 +11,11 @@
 
  
 #define FREE_FRAME 0
-#define USED_FRAME 1
 #define NUM_SHARED_PAGES 10
 
 /* Bytemap to mark the free physical pages */
+// Each entry is the number of references to the frame.
 extern Byte phys_mem[TOTAL_PAGES];
-
-
 
 extern SharedPage shared_pages[NUM_SHARED_PAGES];
 extern page_table_entry dir_pages[NR_TASKS][TOTAL_PAGES];

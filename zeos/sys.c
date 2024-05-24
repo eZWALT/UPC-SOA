@@ -139,6 +139,9 @@ int sys_fork()
         // Copy on write, no need to copy pages right now
         for (pag = 0; pag < NUM_PAG_DATA; ++pag){
             pt_child[pag] = pt_parent[pag];
+
+            // Increment unmber of references to the physical frame
+            phys_mem[pt_child[pag].bits.pbase_addr]++;
             pt_child[pag].bits.rw = 0;
             pt_parent[pag].bits.rw = 0;
         }
@@ -314,7 +317,7 @@ int sys_read(char* b, int maxchars){
     //Check if buffer is not null or smaller than maxchars
     if (!access_ok(VERIFY_READ, b, maxchars)) return -EFAULT; /* EFAULT */
 
-    while(!is_empty(&cbuff)){
+    while(!is_empty(&cbuff) && num_chars < maxchars){
         get(&cbuff, &kern_buff[num_chars]);
         ++num_chars;        
         ++index;
@@ -412,13 +415,3 @@ int sys_shmrm(int id){
 
     return 0;
 }
-
-// Fill with zeros the logical page
-//void zero_out_page(int page)
-//{
-//    char * addr_page = (char *) PH_PAGE(page);
-//    for (int i = 0; i < PAGE_SIZE; ++i)
-//        addr_page[i] = 0x00;
-//
-//    return;
-//}
