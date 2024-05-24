@@ -144,21 +144,31 @@ void pgf_routine()
 
 	int pf_offender;
 	asm("\t movl %%eax, %0" : "=r"(pf_offender));
-    pf_offender = PH_PAGE(pf_offender);
+
+    //page_offender = PH_PAGE(pf_offender);
     page_table_entry* pt = get_PT(current());
     
-    if(is_cow_page(pt, (unsigned int) pf_offender)){
-        //Magically copy a page
+    /*
+        MAIN PROBLEM HERE
+
+        pf_offender is the address of the instruction that raised the exception.
+
+        I have no idea how to derive the actual address access that caused the exception.
+    */
+
+
+    //if(is_cow_page(pt, (unsigned int) ...)){
+        
                 
-    }
-    else{
+    //}
+    //else{
         itohexa(pf_offender, buf);
         strcat(mesg, buf);
         
         printk(mesg);
         
         while (1) {};
-    }
+    //}
 
 }
 

@@ -134,18 +134,23 @@ int sys_fork()
         pt_child[PAG_LOG_INIT_CODE+pag] = pt_parent[PAG_LOG_INIT_CODE+pag];
 
     /* DATA */
-    int free_pt_pages[NUM_PAG_DATA];
-    if(USE_COW){
-        for (int pag = 0; pag < NUM_PAG_DATA; ++pag){
+    if (USE_COW)
+    {
+        // Copy on write, no need to copy pages right now
+        for (pag = 0; pag < NUM_PAG_DATA; ++pag){
             pt_child[pag] = pt_parent[pag];
-            pt_child[pag].rw = 0;
-            pt_child[pag].num_refs++???
+            pt_child[pag].bits.rw = 0;
+            pt_parent[pag].bits.rw = 0;
         }
-
     }
-    else{
+    else
+    {
+        // No Copy-on-Write functionallity.
+
+        int free_pt_pages[NUM_PAG_DATA];
+
         // Reserve NUM_PAG_DATA free logical pages for the parent
-        for (int pag = 0; pag < NUM_PAG_DATA; ++pag)
+        for (pag = 0; pag < NUM_PAG_DATA; ++pag)
         {
             free_pt_pages[pag] = get_user_free_page(current());
             if (free_pt_pages[pag] < 0) return -ENOMEM;
@@ -171,8 +176,6 @@ int sys_fork()
         }
     }
 
-
-
     // Flush of the Translation Lookaside Buffer
     set_cr3(get_DIR(current()));
 
@@ -181,6 +184,7 @@ int sys_fork()
     child_pcb->nr_ticks = 0;
     child_pcb->state = ST_READY;
     child_pcb->pending_unblocks = 0;
+
     // Insert the child to the RQ
     list_add_tail( &(child_pcb->node), &readyqueue);
 
