@@ -138,12 +138,12 @@ int sys_fork()
     {
         // Copy on write, no need to copy pages right now
         for (pag = 0; pag < NUM_PAG_DATA; ++pag){
-            pt_child[pag] = pt_parent[pag];
+            pt_child[PAG_LOG_INIT_DATA + pag] = pt_parent[PAG_LOG_INIT_DATA + pag];
 
             // Increment unmber of references to the physical frame
-            phys_mem[pt_child[pag].bits.pbase_addr]++;
-            pt_child[pag].bits.rw = 0;
-            pt_parent[pag].bits.rw = 0;
+            phys_mem[pt_child[PAG_LOG_INIT_DATA + pag].bits.pbase_addr]++;
+            pt_child[PAG_LOG_INIT_DATA + pag].bits.rw = 0;
+            pt_parent[PAG_LOG_INIT_DATA + pag].bits.rw = 0;
         }
     }
     else

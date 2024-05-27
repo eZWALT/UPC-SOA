@@ -12,9 +12,27 @@ int print(char* xd) {
 int __attribute__((__section__(".text.main"))) main(void) {
     // Please modify this function with your desired user.c code
     // NOP
-    fork();
+    test_cow();
+
     while (1)
         ;
+}
+
+inline void test_cow()
+{
+    char * p = (char *) 0x100000;
+    *p = 'A';
+
+    // 'A' is stored in DATA memory of process
+
+    int f = fork();
+
+    if (f != 0)
+    {
+        // Will try to write into x, resulting in a page fault
+        *p = 'B';
+        print(*p);
+    }
 }
 
 inline void test_shmrm(){

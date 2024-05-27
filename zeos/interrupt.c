@@ -139,40 +139,67 @@ void kbd_routine(){
 //si el num refs es 1 eres el unico que tiene esa pagina lo unico que tienes entonces solo cambias los bits de proteccion
 void pgf_routine()
 {	
-	char buf[16];
-	char * mesg = "\nProcess generates a PAGE FAULT exception at %eip = 0x";
 
-	int pf_offender;
-	asm("\t movl %%eax, %0" : "=r"(pf_offender));
+	int faulty_address, faulty_page;
+    asm("\t movl %%cr2, %0" : "=r"(faulty_address));
+    
+    faulty_page = PH_PAGE(faulty_address);
 
-    //page_offender = PH_PAGE(pf_offender);
     page_table_entry* pt = get_PT(current());
     
-    /*
-        MAIN PROBLEM HERE
+    if(is_cow_page(pt, faulty_page))
+    {
+        printk("\n[DEBUG] Writing attempted to copy-on-write page.");
 
-        pf_offender is the address of the instruction that raised the exception.
+        // The page fault was due to Copy on Write
+        if (phys_mem[get_frame(pt, faulty_page)] == 1) pt[faulty_page].bits.rw = 1;
+        else
+        {
+            // It is necessary to allocate new physical frames
+            int free_pt_pages[NUM_PAG_DATA];
 
-        I have no idea how to derive the actual address access that caused the exception.
-    */
+            // Reserve NUM_PAG_DATA free logical pages
+            for (int pag = 0; pag < NUM_PAG_DATA; ++pag)
+            {
+                free_pt_pages[pag] = get_user_free_page(current());
+                if (free_pt_pages[pag] < 0) goto pgf_error;
 
+                int new_ph_pag = alloc_frame();
+                if (new_ph_pag < 0) goto pgf_error;
 
-    //if(is_cow_page(pt, (unsigned int) ...)){
-        
-                
-    //}
-    //else{
-        itohexa(pf_offender, buf);
-        strcat(mesg, buf);
-        
+                set_ss_pag(pt, free_pt_pages[pag], new_ph_pag);
+            }
+
+            set_cr3(get_DIR(current()));
+
+            // Copy the contents
+            for (int pag = 0; pag < NUM_PAG_DATA; ++pag)
+            {
+                // Copy data (SRC, DEST, SIZE)
+                copy_data((void *)((PAG_LOG_INIT_DATA + pag) << 12), 
+                          (void *)(free_pt_pages[pag] << 12), 
+                          PAGE_SIZE);
+
+                --phys_mem[get_frame(pt, faulty_page)];
+
+                set_ss_pag(pt, PAG_LOG_INIT_DATA + pag, get_frame(pt, free_pt_pages[pag]));
+            }
+
+            set_cr3(get_DIR(current()));
+        }
+    }
+    else
+    {
+        pgf_error:
+	    char buff[16];
+        char * mesg = "\nPAGE FAULT at address: 0x";
+
+        itohexa(faulty_address, buff);
+        strcat(mesg, buff);
         printk(mesg);
-        
-        while (1) {};
-    //}
+
+        while (1);
+
+    }
 
 }
-
-// SYSENTER MSRs:  CS (0x174),  ESP(0x175), @handler/EIP (0x176). SYSENTER pone los bits de privilege level PSW a 00
-// SYSENTER es necesario crear el CtxHW
-// MSR[ECX] <- EDX : EAX (concat)
-
