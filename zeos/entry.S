@@ -87,9 +87,9 @@ ENTRY(clk_handler)
 ENTRY(__wrap_page_fault_handler)
       SAVE_ALL
       EOI
-	movl 0x30(%esp), %eax;   /* Saving to %eax the %eip that caused the exception */
 	call pgf_routine;
       RESTORE_ALL
+      leal 4(%esp), %esp // Need to pop the error code in the Hardware Context
       iret;
 
 #THIS HANDLER SHOULD NOT BE USED AT ALL (Too sus)

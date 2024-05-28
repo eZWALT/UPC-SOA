@@ -20,7 +20,7 @@ int __attribute__((__section__(".text.main"))) main(void) {
 
 inline void test_cow()
 {
-    char * p = (char *) 0x100000;
+    char * p = (char *) 0x106000;
     *p = 'A';
 
     // 'A' is stored in DATA memory of process
@@ -31,8 +31,10 @@ inline void test_cow()
     {
         // Will try to write into x, resulting in a page fault
         *p = 'B';
-        print(*p);
+        print(p);
     }
+
+    while (1) print(p);
 }
 
 inline void test_shmrm(){

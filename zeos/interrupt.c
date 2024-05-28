@@ -183,6 +183,7 @@ void pgf_routine()
                 --phys_mem[get_frame(pt, faulty_page)];
 
                 set_ss_pag(pt, PAG_LOG_INIT_DATA + pag, get_frame(pt, free_pt_pages[pag]));
+                del_ss_pag(pt, free_pt_pages[pag]);
             }
 
             set_cr3(get_DIR(current()));
