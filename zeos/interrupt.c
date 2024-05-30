@@ -150,6 +150,9 @@ void pgf_routine()
     if(is_cow_page(pt, faulty_page))
     {
         printk("\n[DEBUG] Writing attempted to copy-on-write page.");
+        char buff[12];
+        itodeca(faulty_page, buff);
+        printk(buff);
 
         // The page fault was due to Copy on Write
         if (phys_mem[get_frame(pt, faulty_page)] == 1) pt[faulty_page].bits.rw = 1;

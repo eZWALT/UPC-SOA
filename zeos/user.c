@@ -12,7 +12,9 @@ int print(char* xd) {
 int __attribute__((__section__(".text.main"))) main(void) {
     // Please modify this function with your desired user.c code
     // NOP
-    test_cow();
+
+    // внимание!
+    test_shmat();
 
     while (1)
         ;
@@ -27,14 +29,14 @@ inline void test_cow()
 
     int f = fork();
 
-    if (f != 0)
+    if (f == 0)
     {
         // Will try to write into x, resulting in a page fault
         *p = 'B';
         print(p);
     }
 
-    while (1) print(p);
+    while (1) print(p); // should alternate between A and B
 }
 
 inline void test_shmrm(){

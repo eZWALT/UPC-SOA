@@ -179,6 +179,21 @@ int sys_fork()
         }
     }
 
+    // Copy Shared Memory pages
+    for (pag = USER_LAST_PAGE; pag < TOTAL_PAGES; ++pag)
+    {
+        if (is_logic_page_free(pt_parent, pag)) continue;
+
+        unsigned int frame = pt_parent[pag].bits.pbase_addr << 12;
+        int idx = is_frame_shared(frame);
+
+        if (idx != 0)
+        {
+            ++shared_pages[idx].num_refs;            
+            set_ss_pag(pt_child, pag, frame);
+        }
+    }
+
     // Flush of the Translation Lookaside Buffer
     set_cr3(get_DIR(current()));
 
@@ -220,7 +235,7 @@ void sys_exit()
     struct list_head * e, *tmp;
 
     for (int i = 0; i < NR_TASKS; ++i)
-    {   
+    {
         if (task[i].task.parent != current()) continue;
 
         task[i].task.parent = idle_task;
@@ -229,6 +244,26 @@ void sys_exit()
     }
 
     //Free the references of shared pages
+    for (int pag = USER_LAST_PAGE; pag < TOTAL_PAGES; ++pag)
+    {
+        
+        page_table_entry * pt = get_PT(proc_pcb);
+        if (is_logic_page_free(pt, pag)) continue;
+
+        unsigned int frame = pt[pag].bits.pbase_addr << 12;
+        int idx = is_frame_shared(frame);
+
+        if (idx != 0)
+        {
+            --shared_pages[idx].num_refs;
+            if(shared_pages[idx].num_refs == 0 && shared_pages[idx].to_clear == 1) 
+                zero_out(frame, PAGE_SIZE);
+            
+            del_ss_pag(pt, frame);
+            //proc_pcb->sh_mem_pages[idx] = 0;
+        }
+    }
+    /*
     for (int idx = 0; idx < NUM_SHARED_PAGES; ++idx)
     {
         if (proc_pcb->sh_mem_pages[idx] != 0)
@@ -241,7 +276,7 @@ void sys_exit()
             del_ss_pag(get_PT(proc_pcb), proc_pcb->sh_mem_pages[idx]);
             proc_pcb->sh_mem_pages[idx] = 0;
         }
-    }
+    }*/
 
     //Schedule the next process to be executed
     update_process_state_rr(proc_pcb, &freequeue, ST_ZOMBIE);
@@ -315,7 +350,7 @@ int sys_read(char* b, int maxchars){
     char kern_buff[MAX_BUFFER_SIZE];
 
     //Check if buffer is not null or smaller than maxchars
-    if (!access_ok(VERIFY_READ, b, maxchars)) return -EFAULT; /* EFAULT */
+    if (!access_ok(VERIFY_WRITE, b, maxchars)) return -EFAULT; /* EFAULT */
 
     while(!is_empty(&cbuff) && num_chars < maxchars){
         get(&cbuff, &kern_buff[num_chars]);
@@ -359,19 +394,19 @@ void* sys_shmat(int id, void* addr){
         addr_page = get_user_free_page(current());
         if (addr_page == -1) return (void*) -ENOMEM;
     }
-    else 
+    else
     {
         if (((unsigned int) addr) % PAGE_SIZE != 0) return (void*) -EFAULT;    
 
         addr_page = ((unsigned int) addr) >> 12;
-        if (!is_logic_page_free(proc_tp, addr_page)) 
+        if (!is_logic_page_free(proc_tp, addr_page))
         {
             addr_page = get_user_free_page(current());
             if (addr_page == -1) return (void*) -ENOMEM;
         }
     }
 
-    current()->sh_mem_pages[id] = addr_page; // Register new shared page
+    //current()->sh_mem_pages[id] = addr_page; // Register new shared page
     set_ss_pag(proc_tp, addr_page, shared_pages[id].frame);
     set_cr3(get_DIR(current()));
 
@@ -390,16 +425,14 @@ int sys_shmdt(void* addr){
     if (is_logic_page_free(proc_tp, addr_page)) return -ENOSHR;
 
     unsigned frame = proc_tp[addr_page].bits.pbase_addr;
-    if (is_frame_shared(frame))
+    int idx = is_frame_shared(frame);
+
+    if (idx != 0)
     {        
-        int idx = 0;
-        for (idx = 0; idx < NUM_SHARED_PAGES; ++idx){
-            if (shared_pages[idx].frame == frame) break;
-        }
         --shared_pages[idx].num_refs;
         if(shared_pages[idx].num_refs == 0 && shared_pages[idx].to_clear == 1) zero_out(addr, PAGE_SIZE);
         
-        current()->sh_mem_pages[idx] = 0; // Set to 0 shared page id
+        //current()->sh_mem_pages[idx] = 0; // Set to 0 shared page id
         del_ss_pag(proc_tp, addr_page);
         set_cr3(get_DIR(current()));
 
