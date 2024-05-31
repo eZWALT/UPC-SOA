@@ -34,7 +34,6 @@ struct task_struct {
     unsigned int quantum;                  /* CPU Quantum */
     int pending_unblocks;                  /* Number of pending unblocks left */ 
 
-    //unsigned int sh_mem_pages[NUM_SHARED_PAGES];         /* Vector of all used shared memory pages (0 if not in use) */
 };
 
 //UNION (PCB + SYS STACK)

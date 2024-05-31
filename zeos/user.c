@@ -11,13 +11,25 @@ int print(char* xd) {
 
 int __attribute__((__section__(".text.main"))) main(void) {
     // Please modify this function with your desired user.c code
-    // NOP
-
-    // внимание!
-    test_shmat();
+    test_cow();
 
     while (1)
         ;
+}
+
+inline void test_shmdt()
+{
+    set_color(WHITE, RED);
+
+    // Let's first assign and immediately deassign shared memory page
+    char * addr = (char *) shmat(8, (void*) 0x11C000);
+    strcpy(addr, "\n\nBig Brother is watching you.");
+
+    print(addr); // Should work
+
+    shmdt(addr);
+    
+    print(addr); // shouldn't work
 }
 
 inline void test_cow()
@@ -26,14 +38,12 @@ inline void test_cow()
     *p = 'A';
 
     // 'A' is stored in DATA memory of process
-
     int f = fork();
 
     if (f == 0)
     {
         // Will try to write into x, resulting in a page fault
         *p = 'B';
-        print(p);
     }
 
     while (1) print(p); // should alternate between A and B

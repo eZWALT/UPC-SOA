@@ -260,23 +260,8 @@ void sys_exit()
                 zero_out(frame, PAGE_SIZE);
             
             del_ss_pag(pt, frame);
-            //proc_pcb->sh_mem_pages[idx] = 0;
         }
     }
-    /*
-    for (int idx = 0; idx < NUM_SHARED_PAGES; ++idx)
-    {
-        if (proc_pcb->sh_mem_pages[idx] != 0)
-        {
-            // The page was being used 
-            --shared_pages[idx].num_refs;
-            if(shared_pages[idx].num_refs == 0 && shared_pages[idx].to_clear == 1) 
-                zero_out(proc_pcb->sh_mem_pages[idx] << 12, PAGE_SIZE);
-            
-            del_ss_pag(get_PT(proc_pcb), proc_pcb->sh_mem_pages[idx]);
-            proc_pcb->sh_mem_pages[idx] = 0;
-        }
-    }*/
 
     //Schedule the next process to be executed
     update_process_state_rr(proc_pcb, &freequeue, ST_ZOMBIE);
@@ -444,6 +429,8 @@ int sys_shmdt(void* addr){
 }
 
 int sys_shmrm(int id){
+    if (id < 0 || id > 9) return -ENOSHR;
+
     shared_pages[id].to_clear = 1;
 
     return 0;

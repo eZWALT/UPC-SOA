@@ -87,7 +87,11 @@ ENTRY(clk_handler)
 ENTRY(__wrap_page_fault_handler)
       SAVE_ALL
       EOI
+
+      pushl 0x30(%esp)
 	call pgf_routine;
+      leal 4(%esp), %esp // Pop the %eip passed as parameter
+      
       RESTORE_ALL
       leal 4(%esp), %esp // Need to pop the error code in the Hardware Context
       iret;
