@@ -90,18 +90,33 @@ int access_ok(int type, const void * addr, unsigned long size)
   switch(type)
   {
     case VERIFY_WRITE:
-      /* Should suppose no support for automodifyable code */
-      if ((addr_ini>=USER_FIRST_PAGE)&&
-          (addr_fin<=USER_FIRST_PAGE+NUM_PAG_DATA))
-	  return 1;
+      if ((addr_ini >= USER_FIRST_PAGE + NUM_PAG_CODE) && 
+          (addr_fin <= USER_LAST_PAGE)) return 1;
+
+      if (addr_ini >= USER_LAST_PAGE && addr_fin < TOTAL_PAGES)
+        return check_allocated(addr_ini, addr_fin);
+
     default:
       if ((addr_ini>=USER_FIRST_PAGE)&&
   	(addr_fin<=(USER_FIRST_PAGE+NUM_PAG_CODE+NUM_PAG_DATA)))
           return 1;
+
+      if (addr_ini >= USER_LAST_PAGE && addr_fin < TOTAL_PAGES)
+        return check_allocated(addr_ini, addr_fin);
+
   }
   return 0;
 }
 
+int check_allocated(unsigned long addr_ini, unsigned long addr_fin)
+{
+  for (unsigned long i = addr_ini; i <= addr_fin; ++i)
+  {
+    if (is_logic_page_free(get_PT(current()), i)) return 0;
+  }
+
+  return 1;
+}
 
 #define CYCLESPERTICK 109000
 

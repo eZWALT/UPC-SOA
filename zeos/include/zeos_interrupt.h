@@ -3,7 +3,7 @@
 void zeos_show_clock();
 ////
 void kbd_routine();
-void pgf_routine();
+void pgf_routine(unsigned long faulty_instruction);
 void clk_routine();
 ////
 void divide_error_routine();

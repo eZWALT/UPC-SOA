@@ -137,65 +137,56 @@ void kbd_routine(){
 }
 
 //si el num refs es 1 eres el unico que tiene esa pagina lo unico que tienes entonces solo cambias los bits de proteccion
-void pgf_routine()
+void pgf_routine(unsigned long faulty_instruction)
 {	
-
 	int faulty_address, faulty_page;
+
+    // Saving cr2 (faulty address) and %eax (faulty_instruction) (see handler)
     asm("\t movl %%cr2, %0" : "=r"(faulty_address));
-    
+
     faulty_page = PH_PAGE(faulty_address);
 
     page_table_entry* pt = get_PT(current());
     
     if(is_cow_page(pt, faulty_page))
     {
-        printk("\n[DEBUG] Writing attempted to copy-on-write page.");
+        //printk("\n[DEBUG] Writing attempted to copy-on-write page ");
+        //char buff[12];
+        //itodeca(faulty_page, buff);
+        //printk(buff);
 
         // The page fault was due to Copy on Write
         if (phys_mem[get_frame(pt, faulty_page)] == 1) pt[faulty_page].bits.rw = 1;
         else
         {
-            // It is necessary to allocate new physical frames
-            int free_pt_pages[NUM_PAG_DATA];
+            int free_pt_page = get_user_free_page(current());
+            if (free_pt_page < 0) goto pgf_error;
 
-            // Reserve NUM_PAG_DATA free logical pages
-            for (int pag = 0; pag < NUM_PAG_DATA; ++pag)
-            {
-                free_pt_pages[pag] = get_user_free_page(current());
-                if (free_pt_pages[pag] < 0) goto pgf_error;
+            int new_ph_pag = alloc_frame();
+            if (new_ph_pag < 0) goto pgf_error;
 
-                int new_ph_pag = alloc_frame();
-                if (new_ph_pag < 0) goto pgf_error;
-
-                set_ss_pag(pt, free_pt_pages[pag], new_ph_pag);
-            }
+            set_ss_pag(pt, free_pt_page, new_ph_pag);
 
             set_cr3(get_DIR(current()));
 
-            // Copy the contents
-            for (int pag = 0; pag < NUM_PAG_DATA; ++pag)
-            {
-                // Copy data (SRC, DEST, SIZE)
-                copy_data((void *)((PAG_LOG_INIT_DATA + pag) << 12), 
-                          (void *)(free_pt_pages[pag] << 12), 
-                          PAGE_SIZE);
+            copy_data((void *) (faulty_page << 12), (void *) (free_pt_page << 12), PAGE_SIZE);
 
-                --phys_mem[get_frame(pt, faulty_page)];
+            --phys_mem[get_frame(pt, faulty_page)];
 
-                set_ss_pag(pt, PAG_LOG_INIT_DATA + pag, get_frame(pt, free_pt_pages[pag]));
-                del_ss_pag(pt, free_pt_pages[pag]);
-            }
-
-            set_cr3(get_DIR(current()));
+            set_ss_pag(pt, faulty_page, new_ph_pag);
+            del_ss_pag(pt, free_pt_page);
         }
+
+        set_cr3(get_DIR(current()));
+
     }
     else
     {
         pgf_error:
 	    char buff[16];
-        char * mesg = "\nPAGE FAULT at address: 0x";
+        char * mesg = "\nPAGE FAULT generated at %eip = 0x";
 
-        itohexa(faulty_address, buff);
+        itohexa(faulty_instruction, buff);
         strcat(mesg, buff);
         printk(mesg);
 

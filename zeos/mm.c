@@ -241,7 +241,7 @@ void free_frame(unsigned int frame)
 int is_frame_shared(unsigned int frame)
 {
     for (int idx = 0; idx < NUM_SHARED_PAGES; ++idx)  
-        if(shared_pages[idx].frame == frame) return 1;
+        if(shared_pages[idx].frame == frame) return idx;
     
     return 0;
 }

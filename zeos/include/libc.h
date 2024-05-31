@@ -6,8 +6,6 @@
 #ifndef __LIBC_H__
 #define __LIBC_H__
 
-#include <stats.h>
-
 //string utils
 void itodeca(int a, char *b);
 void itohexa(int a, char *b);
