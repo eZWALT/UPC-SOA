@@ -15,6 +15,19 @@ int strlen(char *a);
 void strcat(char *dest, char* src);
 void strcpy(char *dest, char* src);
 
+//Psuedo-RNG utils following a Linear Congruential Generator (LCG)
+//X_n+1 = (A * X_n + C) mod M
+
+#define LCG_A 1664525 
+#define LCG_C 1013904223
+#define LCG_M 4294967296
+extern uint lcg_seed = 1;
+
+void srand(uint seed);
+uint rand();
+uint rand_range(uint min, uint max);
+
+
 //Game syscalls wrappers
 int read(char* b, int maxchars);
 int gotoxy(int x, int y);

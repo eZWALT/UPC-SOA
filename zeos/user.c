@@ -1,9 +1,9 @@
 #include <colors.h>
 #include <libc.h>
 #include <list.h>
+#include <pacman.h>
 
 int pid;
-
 int print(char* xd) {
     write(1, xd, strlen(xd));
     return 1;
@@ -12,11 +12,25 @@ int print(char* xd) {
 int __attribute__((__section__(".text.main"))) main(void) {
     // Please modify this function with your desired user.c code
     // NOP
-    test_cow();
 
-    while (1)
-        ;
+    int pid = fork();
+    //Son process will handle input
+    if(pid == 0){
+        //Main game loop
+        GameState game;
+        initalizeGame(&game,0);
+        renderMap(&game);
+    }
+    else {
+        //Do nothing
+        //read...
+        //write...
+    }
+
+
 }
+
+
 
 inline void test_cow()
 {

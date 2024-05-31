@@ -140,3 +140,16 @@ int strlen(char *a) {
 
     return i;
 }
+
+//Pseudo-RNG utils
+lcg_seed = 1;
+void srand(uint seed){
+    lcg_seed = seed;
+}
+uint rand(){
+    lcg_seed = (LCG_A * lcg_seed + LCG_C) % LCG_M;
+    return lcg_seed; 
+}
+uint rand_range(uint min, uint max){
+    return min + (rand() % (max - min + 1));
+}
