@@ -25,7 +25,7 @@
 //We need a gettime and sleep SYSCALL!!!!!
 #define BOOSTED_TIME 10000
 #define RESPAWN_TIME 5000
-#define FPS 60
+#define FPS 10
 #define FRAME_TIME 1.0/FPS
 
 #define uint unsigned int
@@ -65,6 +65,7 @@ typedef struct {
     Point position;
     Direction direction;
     char skin;
+    char tile;
     int fg_color;
     int bg_color;
     uint isAlive;
@@ -92,6 +93,7 @@ typedef struct {
     Ghost ghosts[NUM_GHOSTS];
     uint score;
     uint lives;
+    uint pelletsRemaining;
     uint level;
     char map[MAP_HEIGHT][MAP_WIDTH+1];
     LeaderboardEntry leaderboard[MAX_LEADERBOARD_ENTRIES];
@@ -132,7 +134,7 @@ void renderFooter(GameState* game);
 //This function can be optimized to avoid print overhead
 void renderMap(GameState* game);
 
-void renderGame(GameState* game);
+void renderGame(GameState* game, int render_bg);
 
 //Removes the item on the map and it gets replaced by a space
 void removeItem(GameState* game, Point position);

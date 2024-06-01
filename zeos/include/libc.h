@@ -17,9 +17,9 @@ char lower(char c);
 //Psuedo-RNG utils following a Linear Congruential Generator (LCG)
 //X_n+1 = (A * X_n + C) mod M
 
-#define LCG_A 1664525 
-#define LCG_C 1013904223
-#define LCG_M 4294967296
+#define MULTIPLIER 1103515245
+#define INCREMENT 12345
+#define MODULUS 2147483648 // 2^31
 
 void srand(unsigned int seed);
 unsigned int rand();

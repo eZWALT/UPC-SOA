@@ -119,7 +119,8 @@ void initializeGhosts(GameState* game, Point spawn[NUM_GHOSTS]){
         game->ghosts[i].spawnPoint = spawn[i];
         game->ghosts[i].position = spawn[i];
         game->ghosts[i].direction = NONE;
-        game->ghosts[i].skin = '&';
+        game->ghosts[i].skin = '0';
+        game->ghosts[i].tile = '.';
         game->ghosts[i].fg_color = ghost_color[i];
         game->ghosts[i].bg_color = BLACK;
         game->ghosts[i].isAlive = 1;
@@ -140,6 +141,7 @@ void initializePacman(GameState *game, Point spawn){
     game->pacman.boostedTimer = 0;
     game->pacman.respawnTimer = 0;
     game->pacman.isAlive = 1;
+    game->map[spawn.y][spawn.x] = 'C';
 }
 
 void initializeLeaderboard(GameState *game){
@@ -164,12 +166,15 @@ void initializeRound(GameState *game, uint level, uint lives, uint score){
         ghost_spawns[1] = (Point){40, 11};
         ghost_spawns[2] = (Point){38, 13};
         ghost_spawns[3] = (Point){40, 13};
+        game->pelletsRemaining = 300;
     } else {
         pacman_spawn = (Point){42, 10};
         ghost_spawns[0] = (Point){78, 1};
         ghost_spawns[1] = (Point){1, 22};
         ghost_spawns[2] = (Point){1, 1};
         ghost_spawns[3] = (Point){78, 22};
+        game->pelletsRemaining = 600;
+
     }
 
     // initialize
@@ -181,7 +186,7 @@ void initializeRound(GameState *game, uint level, uint lives, uint score){
 /*******************Rendering and MAP functions******************/
 
 // Function to map characters to their corresponding foreground and background colors
-void getMapColors(char character, int* fg_color, int* bg_color) {
+void getMapColors(GameState * game, char character, int* fg_color, int* bg_color) {
     switch (character) {
         case '#':
             *fg_color = LIGHT_RED;
@@ -199,6 +204,27 @@ void getMapColors(char character, int* fg_color, int* bg_color) {
             *fg_color = BLACK;
             *bg_color = BLACK;
             break;
+        case 'C':
+            *fg_color = game->pacman.fg_color;
+            *bg_color = game->pacman.bg_color;
+            break;
+        case '0':
+            *fg_color = game->ghosts[0].fg_color;
+            *bg_color = game->ghosts[0].bg_color;
+            break;
+        case '1':
+            *fg_color = game->ghosts[1].fg_color;
+            *bg_color = game->ghosts[1].bg_color;
+            break;
+        case '2':
+            *fg_color = game->ghosts[2].fg_color;
+            *bg_color = game->ghosts[2].bg_color;
+            break;
+        case '3':
+            *fg_color = game->ghosts[3].fg_color;
+            *bg_color = game->ghosts[3].bg_color;
+            break;
+
         // Add cases for other characters as needed
         default:
             // Default color if character not found
@@ -207,47 +233,6 @@ void getMapColors(char character, int* fg_color, int* bg_color) {
             break;
     }
 }
-
-//Screen buffer to avoid blinking ????? WIP
-char screenBuffer[MAP_HEIGHT][MAP_WIDTH];
-
-void clearScreenBuffer(){
-    for(int i = 0; i < MAP_HEIGHT; ++i){
-        for(int j = 0; j < MAP_WIDTH; ++j) screenBuffer[i][j] = ' ';
-    }
-}
-
-void renderCharToBuffer(int x, int y, char * character, int fg_color, int bg_color){
-    if(x >= 0 && x < MAP_WIDTH && y >= 0 && y < MAP_HEIGHT){
-        set_color(fg_color, bg_color);
-        gotoxy(x,y);
-        print(character);
-    }
-}
-
-void renderScreenFromBuffer(){
-    int fg_color, bg_color;
-    for(int i = 0; i < MAP_HEIGHT; ++i){
-        gotoxy(0,i);
-        for(int j = 0; j < MAP_WIDTH; ++j){
-            getMapColors(screenBuffer[i][j], fg_color, bg_color);
-            print(&screenBuffer[i][j]);
-        }
-    }
-}
-
-//This method is really dumb and slow, tracking a boolean value would be faster
-int isBufferDifferent(){
-    for(int i = 0; i < MAP_HEIGHT; ++i){
-        for(int j = 0; j < MAP_WIDTH; ++j){
-            if(screenBuffer[i][j] != game->map[i][j]){
-                return 1;
-            }
-        }
-    }
-    return 0;
-}
-
 void clear_line(uint row){
     char clear_str[MAP_WIDTH+1];
     clear_str[MAP_WIDTH] = '\0';
@@ -304,17 +289,18 @@ void renderMap(GameState* game){
         for(int j = 0; j < MAP_WIDTH; ++j){
             buffer[0] = game->map[i][j];
             if(buffer[0] == '\0') continue;
-            getMapColors(buffer[0], &fg_color, &bg_color);
+
+            getMapColors(game, buffer[0], &fg_color, &bg_color);
             set_color(fg_color, bg_color);
             print(buffer);
         }
     }
 }
 
-void renderGame(GameState* game){
+void renderGame(GameState* game, int to_render_map){
     renderMap(game);
-    renderEntities(game);
-    renderFooter(game);
+    //renderEntities(game);
+    //renderFooter(game);
 }
 
 void removeItem(GameState* game, Point position){
@@ -370,7 +356,7 @@ Direction determineDirection(Point current, Point next){
 }
 
 Direction random(){
-    switch (rand() % 4) {
+    switch (rand_range(0, 4)) {
         case 0: return UP;  
         case 1: return DOWN;  
         case 2: return LEFT;  
@@ -539,7 +525,9 @@ void updatePacmanPosition(GameState* game){
 
     //Check if any item is consumed
     if(!isWall(game, nextPosition)){
+        game->map[game->pacman.position.y][game->pacman.position.x] = ' ';
         game->pacman.position = nextPosition;
+        game->map[game->pacman.position.y][game->pacman.position.x] = 'C';
 
         if(isPellet(game, nextPosition)){
             game->score += PELLET_POINTS;
@@ -569,7 +557,7 @@ void updatePacmanPosition(GameState* game){
                     game->score += GHOST_POINTS;
                 }
             }
-            //WIP LIVES == 0, THEN GAME IS OVER
+
             //Ghost eats pacman
             else{
                 if(equalPoints(game->ghosts[i].position, nextPosition) && game->ghosts[i].isAlive){
@@ -583,6 +571,8 @@ void updatePacmanPosition(GameState* game){
             }
         }
     }
+
+    // Update map
 }
 
 void updateTimerState(GameState* game, uint elapsedTime){
@@ -636,12 +626,19 @@ void updateGhostsPositions(GameState* game){
             switch (game->ghosts[i].algorithm) {
                 case RANDOM:
                     dir = random();
+                    break;
                 case DFS:
-                    dir = dfs(game, initialPosition, targetPosition);
+                    //dir = dfs(game, initialPosition, targetPosition);
+                    dir = random();
+                    break;
                 case BFS:
-                    dir = bfs(game, initialPosition, targetPosition);
+                    //dir = bfs(game, initialPosition, targetPosition);
+                    dir = random();
+                    break;
                 case DIJKSTRA:
                     dir = dijkstra(game, initialPosition, targetPosition);
+                    //dir = random();
+                    break;
                 default:
                     dir = random();
             }
@@ -650,18 +647,44 @@ void updateGhostsPositions(GameState* game){
 
             //If a wall is hitten, then the movement will be randomized
             //This can be infinite if you are infinitely unlucky
-            while(isWall(game, nextPosition)){
+            while(isWall(game, nextPosition) || isGhost(game, nextPosition)){
                 nextPosition = getNextPoint(initialPosition, random());
             }
             if(isValidMove(game, nextPosition)){
+                game->map[initialPosition.y][initialPosition.x] = game->ghosts[i].tile;
+
+                game->ghosts[i].tile = game->map[nextPosition.y][nextPosition.x];
+                if (game->ghosts[i].tile != ' ' && game->ghosts[i].tile != '*' &&game->ghosts[i].tile != '.')
+                    game->ghosts[i].tile = ' ';
+
                 game->ghosts[i].position = nextPosition;
+
+                char ic;
+                switch(i)
+                {
+                    case 0:
+                    ic = '0';
+                    break;
+                    case 1:
+                    ic = '1';
+                    break;
+                    case 2:
+                    ic = '2';
+                    break;
+                    case 3:
+                    ic = '3';
+                    break;
+                }
+
+                game->map[nextPosition.y][nextPosition.x] = ic;
+
                 game->ghosts[i].direction = determineDirection(game->ghosts[i].position, nextPosition);
             }
         }
     }
 }
 
-int isRoundOver(){
+int isRoundOver(GameState * game){
     return 0;
 }
 
@@ -674,87 +697,3 @@ void updateGameState(GameState* game, uint elapsedTime){
         //initializeRound();
     }
 }
-
-/******************* Main game functions ******************/
-//THESE FUNCTIONS ARE STILL ON DEVELOPMENT !!!!!!! 
-//YET TO BE IMPLEMENTED
-
-//Main loop for a single player (until all the lives are consumed)
-void playGame(GameState* game, const char *playerName){
-
-    initializeRound(game,0,3,0);
-
-    while(game->lives > 0){
-
-    }
-
-    updateLeaderboard(game, playerName, game->score);
-}
-
-/*
-void main_loop(){
-    GameState game;
-    char playerName[MAX_NAME_LENGTH];
-
-    initializeLeaderboard(&game);
-
-    while (1) {
-        printf("Enter your name: ");
-        //Get user input command pattern
-        playGame(&game, playerName);
-
-        displayLeaderboard(&game);
-
-        printf("Do you want to play again? (y/n): ");
-        char choice;
-        scanf(" %c", &choice);
-        if (choice != 'y' && choice != 'Y') {
-            break;
-        }
-    }
-}
-*/
-
-//MAIN MAIN LOOP (WITH TIME)
-/*
-int pacman_main() {
-    srand(0);
-
-    GameState game;
-    // Initialize the game state, map, and other variables
-
-    struct timespec lastTime, currentTime;
-
-    // What is CLOCK_MONOTONIC, clock_gettime, timespec ?
-    clock_gettime(CLOCK_MONOTONIC, &lastTime);
-
-    while (1) {
-        clock_gettime(CLOCK_MONOTONIC, &currentTime);
-        int elapsedTime = (currentTime.tv_sec - lastTime.tv_sec) * 1000 + (currentTime.tv_nsec - lastTime.tv_nsec) / 1000000;
-
-        if (elapsedTime >= FRAME_TIME) {
-            // Read user input for Pacman direction
-            // For example:
-            // game.pacman.direction = readInput();
-
-            // Update game state
-            updatePacmanPosition(&game);
-            updateGhostsPosition(&game, elapsedTime);
-            updateBoostedState(&game, elapsedTime);
-
-            // Render the game state
-            renderGame(&game);
-
-            // Update lastTime
-            lastTime = currentTime;
-
-            // Add a delay or frame rate control here if necessary
-        } else {
-            // Sleep for the remaining time to maintain a consistent frame rate
-            usleep((FRAME_TIME - elapsedTime) * 1000);
-        }
-    }
-
-    return 0;
-}
-*/

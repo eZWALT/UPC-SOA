@@ -9,7 +9,7 @@
 
 // Global variable for error codes
 int errno;
-unsigned int lcg_seed = 1000;
+unsigned int lcg_seed;
 
 void perror() {
     char error_msg[256];
@@ -153,7 +153,7 @@ void srand(unsigned int seed){
     lcg_seed = seed;
 }
 unsigned int rand(){
-    lcg_seed = (LCG_A * lcg_seed + LCG_C) % LCG_M;
+    lcg_seed = (MULTIPLIER * lcg_seed + INCREMENT) % MODULUS;
     return lcg_seed; 
 }
 unsigned int rand_range(unsigned int min, unsigned int max){

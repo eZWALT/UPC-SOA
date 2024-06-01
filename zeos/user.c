@@ -10,24 +10,29 @@ int print(char* xd) {
 
 void gameloop()
 {
+    srand(322321);
+
     int n_frames = 0;
     GameState game;
-    initializeRound(&game, 0, 3, 0);
+    initializeRound(&game, 1, 3, 0);
     //Time variables to track elapsed time between updates
     unsigned int realFrameTime, currentTime, elapsedTime, lastTime = get_time_ms();
+
+    renderGame(&game, 1);
 
     while(1){
         n_frames++;
         //Handle input logic asynchronously
-        get_input();
+        get_input(&game);
         //Get elapsed time since last update
         currentTime = get_time_ms();
         elapsedTime = currentTime - lastTime;
+
         //Update the game 
-        updateGameState(game, elapsedTime);
+        updateGameState(&game, elapsedTime);
 
         //Render the game
-        renderGame(&game);
+        renderGame(&game, 0);
 
         //Control the framerate
         realFrameTime = get_time_ms() - currentTime;
@@ -37,8 +42,6 @@ void gameloop()
     }
 }
 
-//WIP: this still needs work
-//Gets 1 char input from the shared pages
 void get_input(GameState* game){
 
     char input = 'w';
@@ -50,6 +53,13 @@ void get_input(GameState* game){
 //WIP: this still needs work
 void input_processing()
 {
+    char * addr = shmat(0, (void *) 0x11C000);
+
+    while (1)
+    {
+        // Read
+    }
+
     //Some logic should be added here that reads the kbd 
     //and updates the shared memory region
 }
@@ -64,8 +74,5 @@ int __attribute__((__section__(".text.main"))) main(void) {
     int pid = fork();
 
     if (pid == 0) input_processing();
-    else {
-        gameloop();
-    }
-    while(1);
+    else          gameloop();
 }
