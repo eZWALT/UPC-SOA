@@ -28,6 +28,8 @@
 #define FPS 60
 #define FRAME_TIME 1.0/FPS
 
+#define uint unsigned int
+
 typedef struct {
     char name[MAX_NAME_LENGTH];
     uint score;
@@ -116,7 +118,7 @@ PriorityNode dequeue(PriorityNode* queue, int* front, int rear){
 }
 
 void enqueue(PriorityNode* queue, int* rear, Point position, int distance){
-    queue[*rear].positon = position;
+    queue[*rear].position = position;
     queue[*rear].distance = distance;
     (*rear)++;
 }
@@ -182,25 +184,26 @@ void initializeRound(GameState *game, uint level, uint lives, uint score){
     game->score = 0;
     game->lives = 3;
     game->level = 0;
-    Point pacman_spawn = Point();
+
+    Point pacman_spawn = {1, 1};
     Point ghost_spawns[NUM_GHOSTS] = {Point()};
 
-    initialize
+    // initialize
     initializeMap(game);
     initalizePacman(game, pacman_spawn);
-    initializeGhosts(game,ghost_spawns);
+    initializeGhosts(game, ghost_spawns); 
 }
 
 //Copy the map row by row, using the current level to select the map
 void initializeMap(GameState* game){
-    for(i = 0; i < MAP_HEIGHT; ++i){
-        strcpy(game->map[i], predefinedMaps[game->level][i])
+    for (int i = 0; i < MAP_HEIGHT; ++i){
+        strcpy(game->map[i], predefinedMaps[game->level][i]);
     }
 }
 
 //Initial position of ghosts, surrounding (X,Y), default colors
 void initializeGhosts(GameState* game, Point spawn[NUM_GHOSTS]){
-    for(int i = 0; i < NUM_GHOSTS; ++i){
+    for (int i = 0; i < NUM_GHOSTS; ++i){
         game->ghosts[i].spawnPoint = spawn[i];
     }
 }
@@ -208,16 +211,15 @@ void initializeGhosts(GameState* game, Point spawn[NUM_GHOSTS]){
 void initializePacman(GameState *game, Point spawn){
     game->pacman.spawnPoint = spawn;
     game->pacman.direction = RIGHT;
-    game->pacman.is_doped = 0;
+    game->pacman.isBoosted = 0;
     game->pacman.skin = 'C';
-    game->pacman.color = 0x05;
 }
 
 /*******************Leaderboard functions******************/
 void initializeLeaderboard(GameState *game){
     for(int i = 0; i < MAX_LEADERBOARD_ENTRIES; ++i){
         strcpy(game->leaderboard[i].name, "");
-        game->leaderboard.score = 0;
+        game->leaderboard[i].score = 0;
     }
 }
 
@@ -272,7 +274,7 @@ void renderEntities(GameState* game) {
     
 }
 
-clear_line(uint row){
+void clear_line(uint row){
     char clear_str[MAP_WIDTH+1];
     clear_str[MAP_WIDTH] = '\0';
     set_color(BLACK, BLACK);
@@ -299,7 +301,7 @@ uint isPellet(GameState* game, Point position){
 }
 
 uint isWall(GameState* game, Point position){
-    return game->map[position.y][position.x] == '#'
+    return game->map[position.y][position.x] == '#';
 }
 
 uint isBooster(GameState* game, Point position){
@@ -307,13 +309,14 @@ uint isBooster(GameState* game, Point position){
 }
 
 uint isGhost(GameState* game, Point position){
-    for(int i = 0; i < game->num_ghosts; ++i){
-        if(equalPoints(game->ghosts[i].position, position)) return 1;
+    for(int i = 0; i < NUM_GHOSTS; ++i){
+        if(equalPoints(game->ghosts[i].position, position)) 
+            return 1;
     }
     return 0;
 }
 
-uint equalPoints(Point a, Point b){
+int equalPoints(Point a, Point b){
     return a.x == b.x && a.y == b.y;
 }
 
@@ -342,7 +345,7 @@ Direction random(){
 
 Point getNextPoint(Point initial, Direction direction){
     switch(direction){
-        case UP: inital.y++; break;
+        case UP: initial.y++; break;
         case DOWN: initial.y--; break;
         case RIGHT: initial.x++; break;
         case LEFT: initial.x--; break;
@@ -375,7 +378,7 @@ Direction dfs(GameState* game, Point start, Point target){
         Point moves[] = {{current.x-1,current.y}, {current.x+1, current.y}, {current.x, current.y-1}, {current.x, current.y+1}};
         for(int i = 0; i < 4; ++i){
             Point next = moves[i];
-            if(isValidMove(current, next) && !visited[next.x][next.y]){
+            if(isValidMove(game, next) && !visited[next.x][next.y]){
                 stack[++top] = next;
                 visited[next.y][next.x] = 1;
                 previous[next.y][next.x] = current;
@@ -385,7 +388,7 @@ Direction dfs(GameState* game, Point start, Point target){
     return NONE;
 }
 
-Direction bfs(GameState* game, Point position, Point target){
+Direction bfs(GameState* game, Point start, Point target){
     char visited[MAP_HEIGHT][MAP_WIDTH] = {0};
     Point queue[MAP_HEIGHT * MAP_WIDTH];
     int front = 0, rear = 0;
@@ -410,7 +413,7 @@ Direction bfs(GameState* game, Point position, Point target){
         Point moves[] = {{current.x - 1, current.y}, {current.x + 1, current.y}, {current.x, current.y - 1}, {current.x, current.y + 1}};
         for(int i = 0; i < 4; ++i){
             Point next = moves[i];
-            if(isValidMove(current, next) && !visited[next.y][next.x]){
+            if(isValidMove(game, next) && !visited[next.y][next.x]){
                 queue[rear++] = next;
                 visited[next.y][next.x] = 1;
                 previous[next.y][next.x] = current;
@@ -420,11 +423,12 @@ Direction bfs(GameState* game, Point position, Point target){
     return NONE;
 }
 
-Direction dijkstra(GameState* game, Point position, Point target){
+Direction dijkstra(GameState* game, Point start, Point target){
     int distances[MAP_HEIGHT][MAP_WIDTH];
     Point previous[MAP_HEIGHT][MAP_WIDTH];
     PriorityNode queue[MAP_HEIGHT * MAP_WIDTH]; 
     int front = 0, rear = 0;
+
     //Initialize infinite distances
     for(int y = 0; y < MAP_HEIGHT; ++y){
         for(int x = 0; x < MAP_WIDTH; ++x){
@@ -472,10 +476,10 @@ void changeGhostsBehaviour(GameState* game, Behaviour bh){
         game->ghosts[i].behaviour = bh;
         //Change the color of the ghost to blue and white
         if(bh == RUN_AWAY){
-            game->ghosts[i].color = 3;
+            game->ghosts[i].fg_color = 3;
         }
         else if(bh == CHASE){
-            game->ghosts[i].color = 2;
+            game->ghosts[i].fg_color = 2;
         }
     }
 }
@@ -517,14 +521,14 @@ void updatePacmanPosition(GameState* game){
             if(game->pacman.isBoosted){
                 if(equalPoints(game->ghosts[i].position, nextPosition) && game->ghosts[i].isAlive){
                     game->ghosts[i].position = game->ghosts[i].spawnPoint;
-                    game->ghosts[i].timer = RESPAWN_TIME;
+                    game->ghosts[i].deadTimer = RESPAWN_TIME;
                     game->ghosts[i].isAlive = 0;
                     game->score += GHOST_POINTS;
                 }
             }
             //Ghost eats pacman
             else{
-                if(equalPoints(game->ghosts[i], nextPosition) && game->ghosts[i].isAlive){
+                if(equalPoints(game->ghosts[i].position, nextPosition) && game->ghosts[i].isAlive){
                     game->lives--;
                     game->pacman.position = game->pacman.spawnPoint;
                     break; //No need to check for more collisions
@@ -561,18 +565,18 @@ void updateGhostsPositions(GameState* game){
             Point nextPosition, initialPosition = game->ghosts[i].position;
             Direction dir;
             //Tiny heuristic (AI!) :)
-            Point targetPosition = (game->ghosts[i].mode == CHASE)
+            Point targetPosition = (game->ghosts[i].behaviour == CHASE)
             ? game->pacman.position : game->ghosts[i].spawnPoint;
 
             switch (game->ghosts[i].algorithm) {
                 case RANDOM:
                     dir = random();
                 case DFS:
-                    dir = dfs(initialPosition, targetPosition);
+                    dir = dfs(game, initialPosition, targetPosition);
                 case BFS:
-                    dir = bfs(initialPosition, targetPosition);
+                    dir = bfs(game, initialPosition, targetPosition);
                 case DIJKSTRA:
-                    dir = dijkstra(initialPosition, targetPosition);
+                    dir = dijkstra(game, initialPosition, targetPosition);
             }
 
             nextPosition = getNextPoint(initialPosition, dir);
@@ -629,16 +633,18 @@ void main_loop(){
 }
 
 //MAIN MAIN LOOP (WITH TIME)
-int main() {
+int pacman_main() {
     srand(time(NULL));
 
     GameState game;
     // Initialize the game state, map, and other variables
 
     struct timespec lastTime, currentTime;
+
+    // What is CLOCK_MONOTONIC, clock_gettime, timespec ?
     clock_gettime(CLOCK_MONOTONIC, &lastTime);
 
-    while (true) {
+    while (1) {
         clock_gettime(CLOCK_MONOTONIC, &currentTime);
         int elapsedTime = (currentTime.tv_sec - lastTime.tv_sec) * 1000 + (currentTime.tv_nsec - lastTime.tv_nsec) / 1000000;
 
@@ -668,11 +674,5 @@ int main() {
     return 0;
 }
 
-
-/*******************Auxiliar functions******************/
-int print(char* s) {
-    write(1, s, strlen(s));
-    return 1;
-}
 
 #endif PACMAN_HH
