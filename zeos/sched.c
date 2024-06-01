@@ -7,7 +7,7 @@
 #include <mm.h>
 #include <io.h>
 
-#define INIT_QUANTUM 200
+#define INIT_QUANTUM 10
 
 //INITIALIZE THE DATA STRUCTURES DESCRIBED IN SCHED.H
 union task_union task[NR_TASKS]

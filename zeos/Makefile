@@ -48,6 +48,7 @@ USROBJ = \
 	libc.o \
 	user_misc.o\
 	list.o \
+	pacman.o \
 	# libjp.a \
 
 all:zeos.bin
@@ -90,6 +91,8 @@ io.o:io.c $(INCLUDEDIR)/io.h
 sched.o:sched.c $(INCLUDEDIR)/sched.h
 
 libc.o:libc.c $(INCLUDEDIR)/libc.h 
+
+pacman.o: pacman.c $(INCLUDEDIR)/pacman.h
 
 mm.o:mm.c $(INCLUDEDIR)/types.h $(INCLUDEDIR)/mm.h
 
