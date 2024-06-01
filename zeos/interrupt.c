@@ -117,7 +117,6 @@ void initCircBuff()
 
 void clk_routine(){
     ++zeos_ticks;
-    zeos_show_clock();
     ++ticks_since_last_switch;
 
     schedule();

@@ -9,6 +9,7 @@
 
 // Global variable for error codes
 int errno;
+unsigned int lcg_seed = 1000;
 
 void perror() {
     char error_msg[256];
@@ -142,14 +143,13 @@ int strlen(char *a) {
 }
 
 //Pseudo-RNG utils
-lcg_seed = 1;
-void srand(uint seed){
+void srand(unsigned int seed){
     lcg_seed = seed;
 }
-uint rand(){
+unsigned int rand(){
     lcg_seed = (LCG_A * lcg_seed + LCG_C) % LCG_M;
     return lcg_seed; 
 }
-uint rand_range(uint min, uint max){
+unsigned int rand_range(unsigned int min, unsigned int max){
     return min + (rand() % (max - min + 1));
 }

@@ -7,6 +7,8 @@
 #include <mm.h>
 #include <io.h>
 
+#define INIT_QUANTUM 200
+
 //INITIALIZE THE DATA STRUCTURES DESCRIBED IN SCHED.H
 union task_union task[NR_TASKS]
   __attribute__((__section__(".data.task")));
@@ -132,7 +134,7 @@ void init_task1(void)
     ticks_since_last_switch = 0;
 
     // Quantum
-    task1_pcb->quantum = 200;
+    task1_pcb->quantum = INIT_QUANTUM;
 }
 
 void inner_task_switch(union task_union* new)

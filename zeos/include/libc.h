@@ -19,11 +19,10 @@ void strcpy(char *dest, char* src);
 #define LCG_A 1664525 
 #define LCG_C 1013904223
 #define LCG_M 4294967296
-extern uint lcg_seed = 1;
 
-void srand(uint seed);
-uint rand();
-uint rand_range(uint min, uint max);
+void srand(unsigned int seed);
+unsigned int rand();
+unsigned int rand_range(unsigned int min, unsigned int max);
 
 
 //Game syscalls wrappers
