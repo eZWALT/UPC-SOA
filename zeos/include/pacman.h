@@ -93,7 +93,7 @@ typedef struct {
     uint score;
     uint lives;
     uint level;
-    char map[MAP_HEIGHT][MAP_WIDTH];
+    char map[MAP_HEIGHT][MAP_WIDTH+1];
     LeaderboardEntry leaderboard[MAX_LEADERBOARD_ENTRIES];
     char currentPlayer[MAX_NAME_LENGTH];
 } GameState;
@@ -181,6 +181,7 @@ void updateTimerState(GameState* game, uint elapsedTime);
 
 void updateGhostsPositions(GameState* game);
 
+void updateGameState(GameState* game, uint elapsedTime);
 
 /******************* Main game functions ******************/
 

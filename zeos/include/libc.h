@@ -12,6 +12,7 @@ void itohexa(int a, char *b);
 int strlen(char *a);
 void strcat(char *dest, char* src);
 void strcpy(char *dest, char* src);
+char lower(char c);
 
 //Psuedo-RNG utils following a Linear Congruential Generator (LCG)
 //X_n+1 = (A * X_n + C) mod M
@@ -24,9 +25,19 @@ void srand(unsigned int seed);
 unsigned int rand();
 unsigned int rand_range(unsigned int min, unsigned int max);
 
+//Error utils
+extern int errno; 
+void perror();
+
+//User time utils
+#define SECONDS_PER_TICK 250 
+#define MILISECONDS_PER_TICK 4
+unsigned int get_time_ms();
+unsigned int get_time_s();
+void sleep(unsigned int ms);
+unsigned int measure_time_ms(void (*f)());
 
 //Game syscalls wrappers
-int read(char* b, int maxchars);
 int gotoxy(int x, int y);
 int set_color(int fg, int bg);
 
@@ -39,17 +50,19 @@ int shmrm(int id);
 int numsons();
 int numbros();
 
-//syscalls wrappers
+//I/O syscalls wrappers
 int write(int fd, char *buffer, int size);
-int gettime();
+int read(char* b, int maxchars);
+
+
+//Process management wrappers
 int getpid();
 int fork();
 void exit();
-
 void block();
 int unblock(int pid);
 
-extern int errno; 
-void perror();
+//Time wrappers
+int gettime();
 
 #endif  /* __LIBC_H__ */

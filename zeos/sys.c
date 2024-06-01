@@ -15,7 +15,7 @@
 #define LECTURA 0
 #define ESCRIPTURA 1
 #define MAX_BUFFER_SIZE 512
-#define USE_COW 1
+#define USE_COW 0
 
 char kern_buff[MAX_BUFFER_SIZE];
 

@@ -23,8 +23,9 @@ void enqueue(PriorityNode* queue, int* rear, Point position, int distance){
     (*rear)++;
 }
 
-//Ghosts must spawn on the middle on the 1st map and on each corner on the 2nd
-char predefinedMaps[NUM_LEVELS][24][80] = {
+//The additional space is used for null terminator (Since map is treated as an array of strings
+//Rather than a matrix of characters)
+char predefinedMaps[NUM_LEVELS][MAP_HEIGHT][MAP_WIDTH+1] = {
     {
     "################################################################################",
     "#*...................................#####....................................*#",
@@ -79,6 +80,28 @@ char predefinedMaps[NUM_LEVELS][24][80] = {
     }
 };
 
+/******************* Input handling functions******************/
+void processInput(GameState* game, char input){
+    input = lower(input);
+    switch(input){
+        case 'w':
+            game->pacman.direction = UP;
+            break;
+        case 's':
+            game->pacman.direction = DOWN;
+            break;
+        case 'a': 
+            game->pacman.direction = LEFT;
+            break;
+        case 'd':
+            game->pacman.direction = RIGHT;
+            break;
+        default: 
+            game->pacman.direction = NONE;
+            break;
+    }
+}
+
 /******************* Initialization functions******************/
 //Copy the map row by row, using the current level to select the map
 void initializeMap(GameState* game){
@@ -90,15 +113,15 @@ void initializeMap(GameState* game){
 //Initial position of ghosts, surrounding (X,Y), default colors
 void initializeGhosts(GameState* game, Point spawn[NUM_GHOSTS]){
     Algorithm ghost_alg[NUM_GHOSTS] = {RANDOM, BFS, DFS, DIJKSTRA};
-    int ghost_color[NUM_GHOSTS] = {CYAN, MAGENTA, GREEN, WHITE};
+    int ghost_color[NUM_GHOSTS] = {LIGHT_CYAN, LIGHT_MAGENTA, LIGHT_GREEN, RED};
 
     for (int i = 0; i < NUM_GHOSTS; ++i){
         game->ghosts[i].spawnPoint = spawn[i];
         game->ghosts[i].position = spawn[i];
         game->ghosts[i].direction = NONE;
         game->ghosts[i].skin = '&';
-        game->ghosts[i].fg_color = BLACK;
-        game->ghosts[i].bg_color = ghost_color[i];
+        game->ghosts[i].fg_color = ghost_color[i];
+        game->ghosts[i].bg_color = BLACK;
         game->ghosts[i].isAlive = 1;
         game->ghosts[i].deadTimer = 0;
         game->ghosts[i].algorithm = ghost_alg[i];
@@ -110,7 +133,7 @@ void initializePacman(GameState *game, Point spawn){
     game->pacman.spawnPoint = spawn;
     game->pacman.position = spawn;
     game->pacman.direction = NONE;
-    game->pacman.fg_color = LIGHT_GREEN;
+    game->pacman.fg_color = WHITE;
     game->pacman.bg_color = BLACK;
     game->pacman.skin = 'C';
     game->pacman.isBoosted = 0;
@@ -136,11 +159,11 @@ void initializeRound(GameState *game, uint level, uint lives, uint score){
 
     // Set spawn points based on the level
     if (game->level == 0) {
-        pacman_spawn = (Point){37, 1};
-        ghost_spawns[0] = (Point){38, 12};
-        ghost_spawns[1] = (Point){40, 12};
-        ghost_spawns[2] = (Point){38, 14};
-        ghost_spawns[3] = (Point){40, 14};
+        pacman_spawn = (Point){36, 1};
+        ghost_spawns[0] = (Point){38, 11};
+        ghost_spawns[1] = (Point){40, 11};
+        ghost_spawns[2] = (Point){38, 13};
+        ghost_spawns[3] = (Point){40, 13};
     } else {
         pacman_spawn = (Point){42, 10};
         ghost_spawns[0] = (Point){78, 1};
@@ -156,6 +179,75 @@ void initializeRound(GameState *game, uint level, uint lives, uint score){
 }
 
 /*******************Rendering and MAP functions******************/
+
+// Function to map characters to their corresponding foreground and background colors
+void getMapColors(char character, int* fg_color, int* bg_color) {
+    switch (character) {
+        case '#':
+            *fg_color = LIGHT_RED;
+            *bg_color = BLACK;
+            break;
+        case '*':
+            *fg_color = LIGHT_GREEN;
+            *bg_color = BLACK;
+            break;
+        case '.':
+            *fg_color = LIGHT_CYAN;
+            *bg_color = BLACK;
+            break;
+        case ' ':
+            *fg_color = BLACK;
+            *bg_color = BLACK;
+            break;
+        // Add cases for other characters as needed
+        default:
+            // Default color if character not found
+            *fg_color = WHITE;
+            *bg_color = BLACK;
+            break;
+    }
+}
+
+//Screen buffer to avoid blinking ????? WIP
+char screenBuffer[MAP_HEIGHT][MAP_WIDTH];
+
+void clearScreenBuffer(){
+    for(int i = 0; i < MAP_HEIGHT; ++i){
+        for(int j = 0; j < MAP_WIDTH; ++j) screenBuffer[i][j] = ' ';
+    }
+}
+
+void renderCharToBuffer(int x, int y, char * character, int fg_color, int bg_color){
+    if(x >= 0 && x < MAP_WIDTH && y >= 0 && y < MAP_HEIGHT){
+        set_color(fg_color, bg_color);
+        gotoxy(x,y);
+        print(character);
+    }
+}
+
+void renderScreenFromBuffer(){
+    int fg_color, bg_color;
+    for(int i = 0; i < MAP_HEIGHT; ++i){
+        gotoxy(0,i);
+        for(int j = 0; j < MAP_WIDTH; ++j){
+            getMapColors(screenBuffer[i][j], fg_color, bg_color);
+            print(&screenBuffer[i][j]);
+        }
+    }
+}
+
+//This method is really dumb and slow, tracking a boolean value would be faster
+int isBufferDifferent(){
+    for(int i = 0; i < MAP_HEIGHT; ++i){
+        for(int j = 0; j < MAP_WIDTH; ++j){
+            if(screenBuffer[i][j] != game->map[i][j]){
+                return 1;
+            }
+        }
+    }
+    return 0;
+}
+
 void clear_line(uint row){
     char clear_str[MAP_WIDTH+1];
     clear_str[MAP_WIDTH] = '\0';
@@ -167,25 +259,27 @@ void clear_line(uint row){
 //Probably missing a clear function (Rendering)
 void renderEntities(GameState* game) {
     // Render Pacman
+    char entity[2] = {game->pacman.skin, '\0'};
     set_color(game->pacman.fg_color, game->pacman.bg_color);
     gotoxy(game->pacman.position.x, game->pacman.position.y);
-    print(game->pacman.skin);
+    print(entity);
 
     // Render ghosts
     for (int i = 0; i < NUM_GHOSTS; ++i) {
         if (game->ghosts[i].isAlive) {
             set_color(game->ghosts[i].fg_color, game->pacman.bg_color);
             gotoxy(game->ghosts[i].position.x, game->ghosts[i].position.y);
-            print(game->ghosts[i].skin);
+            entity[0] = game->ghosts[i].skin;
+            print(entity);
         }
     }
 }
 
 //WIP
 void renderFooter(GameState* game){
-    gotoxy(0, MAP_HEIGHT+1);
     //Clear footer
     clear_line(MAP_HEIGHT+1);
+    gotoxy(0, MAP_HEIGHT+1);
     set_color(WHITE, BLACK);
 
     const char * lives = "Lives: ";
@@ -193,26 +287,26 @@ void renderFooter(GameState* game){
     const char * player = "Player: ";
 
     print(lives);
+    print(score);
+    print(player);
     //print(game->lives);
 }
 
 //This function can be optimized to avoid print overhead
+//WIP: adding buffer to avoid blinking
 void renderMap(GameState* game){
     gotoxy(0, 0);
+    char buffer[2];
+    buffer[1] = '\0';
+    int fg_color,bg_color;
 
     for(int i = 0; i < MAP_HEIGHT; ++i){
         for(int j = 0; j < MAP_WIDTH; ++j){
-            char cell = game->map[i][j];
-            if(cell == '#'){
-                set_color(0x01, 0x00);
-            }
-            else if(cell == '*'){
-                set_color(0x04, 0x00);
-            }
-            else if(cell == ' '){
-                set_color(0x02,0x00);
-            }
-            print(cell);
+            buffer[0] = game->map[i][j];
+            if(buffer[0] == '\0') continue;
+            getMapColors(buffer[0], &fg_color, &bg_color);
+            set_color(fg_color, bg_color);
+            print(buffer);
         }
     }
 }
@@ -489,9 +583,6 @@ void updatePacmanPosition(GameState* game){
             }
         }
     }
-
-
-    //Check if round is over , DID WE WIN?
 }
 
 void updateTimerState(GameState* game, uint elapsedTime){
@@ -570,7 +661,19 @@ void updateGhostsPositions(GameState* game){
     }
 }
 
+int isRoundOver(){
+    return 0;
+}
 
+void updateGameState(GameState* game, uint elapsedTime){
+    //updatePacmanPosition(game);
+    updateGhostsPositions(game);
+    updateTimerState(game, elapsedTime);
+
+    if(isRoundOver(game)){
+        //initializeRound();
+    }
+}
 
 /******************* Main game functions ******************/
 //THESE FUNCTIONS ARE STILL ON DEVELOPMENT !!!!!!! 

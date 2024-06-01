@@ -61,6 +61,12 @@ void perror() {
     write(1, error_msg, strlen(error_msg));
 }
 
+char lower(char c){
+    if(c >= 'A' && c <= 'Z'){
+        return c + ('a' - 'A');
+    }
+    else return c;
+}
 void itodeca(int a, char *b) {
     int i, i1;
     char c;
@@ -152,4 +158,26 @@ unsigned int rand(){
 }
 unsigned int rand_range(unsigned int min, unsigned int max){
     return min + (rand() % (max - min + 1));
+}
+
+//Time utils
+unsigned int get_time_ms(){
+    return gettime() / MILISECONDS_PER_TICK;
+}
+
+unsigned int get_time_s(){
+    return gettime() / SECONDS_PER_TICK;
+}
+
+void sleep(unsigned int ms){
+    unsigned int start_time = gettime();
+    unsigned int end_time = start_time + (ms / MILISECONDS_PER_TICK);
+    while(gettime() < end_time);
+}
+
+unsigned int measure_time_ms(void (*f)()){
+    unsigned int start_time = gettime();
+    f();
+    unsigned int end_time = gettime();
+    return (end_time - start_time) * MILISECONDS_PER_TICK;
 }
