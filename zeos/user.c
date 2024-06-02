@@ -3,7 +3,7 @@
 #include <list.h>
 #include <pacman.h>
 
-#define TICKS_PER_FRAME 250
+#define TICKS_PER_FRAME TICKS_PER_SECOND/FPS 
 
 int print(char* xd) {
     write(1, xd, strlen(xd));
@@ -14,41 +14,92 @@ void gameloop()
 {
     srand(322321);
     char * addr = (char *) shmat(0, (void *) 0x16C000);
-
     int n_frames = 0;
     GameState game;
-    initializeRound(&game, 1, 3, 0);
-
-    //Time variables to track elapsed time between updates
-    int currentTime, elapsedTime, lastTime = get_time_ms();
-
-    renderGame(&game, 1);
-
-    unsigned long initTimer = gettime();
-    unsigned long prevTimer = initTimer;
+    char currentPlayer[MAX_NAME_LENGTH+1];
+    currentPlayer[MAX_NAME_LENGTH] = '\0';
+    initializeLeaderboard(&game);
 
     while(1){
-        n_frames++;
+        if(game.leaderboardSize >= MAX_LEADERBOARD_ENTRIES){
+            print("No more fellas are allowed to play! Ending game! \n");
+            renderLeaderboard();
+            while(1);
+        }
 
-        //Handle input logic asynchronously
-        processInput(&game, addr[0]);
+        //Get player name
+        renderIntroduceName(&game);
+        get_player_name(currentPlayer, addr);
 
-        //Get elapsed time since last update
-        lastTime    = currentTime;
-        currentTime = get_time_ms();
-        elapsedTime = currentTime - lastTime;
+        //Init round
+        initializeRound(&game, 0, 3, 0, currentPlayer);
 
-        //Update the game 
-        updateGameState(&game, elapsedTime);
+        //Time variables to track elapsed time between updates
+        int currentTime, elapsedTime, lastTime = get_time_ms();
+        renderGame(&game, 1, gettime());
+        unsigned long initTimer = gettime();
+        unsigned long prevTimer = initTimer;
 
-        //Render the game
-        renderGame(&game, 0);
+        while(1){
+            n_frames++;
+            //Handle input logic asynchronously
+            processInput(&game, addr[0]);
+            //Get elapsed time since last update
+            lastTime    = currentTime;
+            currentTime = get_time_ms();
+            elapsedTime = currentTime - lastTime;
+            //Update the game 
+            updateGameState(&game, elapsedTime);
 
-        while (gettime() - prevTimer < TICKS_PER_FRAME);
-        update_fps(gettime() - prevTimer);
+            //The player has been acting sus lately...
+            
+            if(playerHasNoLife(&game)){
+                updateLeaderboard(&game, game.currentPlayer, game.score);
+                renderGameOver(&game);
+                sleep(3000);
+                break;
+            }
+            if(isRoundOver(&game)){
+                if(game.level == 0){
+                    initializeRound(&game, 1, game.lives, game.score, game.currentPlayer);
+                    sleep(2000);
+                }
+                else if(game.level >= 1){
+                    updateLeaderboard(&game, game.currentPlayer, game.score);
+                    //Game is over for this fella
+                    renderGameOver(&game);
+                    sleep(3000);
+                    break;
+                }
+            }
+            
+            //Render the game
 
-        prevTimer = gettime();
+            while (gettime() - prevTimer < TICKS_PER_FRAME);
+            renderGame(&game, 0, gettime() - prevTimer);
+            prevTimer = gettime();
+        }
+
     }
+}
+
+void get_player_name(char name[MAX_NAME_LENGTH + 1], volatile char x[MAX_NAME_LENGTH+1]) {
+    int numChars = 0;
+    name[MAX_NAME_LENGTH] = '\0';
+    char lastChar = '\0';
+
+    while (numChars < MAX_NAME_LENGTH) {
+        char input = *x;
+        if(input == '.') break;
+        // Check if input is a new valid character
+        if (input != '\0' && input != lastChar) {
+            name[numChars] = input;
+            numChars++;
+            lastChar = input;  // Update the lastChar to the current input
+        }
+        sleep(100);
+    }
+    print(name);
 }
 
 void get_input(GameState* game, char * x)
@@ -72,17 +123,6 @@ void input_processing()
 
         (*addr) = x[0];
     }
-}
-
-void update_fps(int ticks)
-{
-    // 400 ticks equals approximately 1 second
-    char buf[10] = "FPS:    ";
-
-    int fps = 400 / ticks;
-    
-    itodeca(fps, &buf[5]);
-    print(buf);
 }
 
 int __attribute__((__section__(".text.main"))) main(void) {

@@ -6,7 +6,7 @@
 
 //Basic game layout
 #define MAX_NAME_LENGTH 10
-#define MAX_LEADERBOARD_ENTRIES 5
+#define MAX_LEADERBOARD_ENTRIES 2
 #define MAP_HEIGHT 24 //One line must be reserved for info
 #define MAP_WIDTH 80
 
@@ -23,15 +23,15 @@
 
 //Timer variables miliseconds
 //We need a gettime and sleep SYSCALL!!!!!
-#define BOOSTED_TIME 10000
-#define RESPAWN_TIME 5000
-#define FPS 1
+#define BOOSTED_TIME 5000
+#define RESPAWN_TIME 3000
+#define FPS 5
 #define FRAME_TIME 1.0/FPS
 
 #define uint unsigned int
 
 typedef struct {
-    char name[MAX_NAME_LENGTH];
+    char name[MAX_NAME_LENGTH+1];
     uint score;
 } LeaderboardEntry;
 
@@ -97,14 +97,15 @@ typedef struct {
     uint level;
     char map[MAP_HEIGHT][MAP_WIDTH+1];
     LeaderboardEntry leaderboard[MAX_LEADERBOARD_ENTRIES];
-    char currentPlayer[MAX_NAME_LENGTH];
+    int leaderboardSize;
+    char currentPlayer[MAX_NAME_LENGTH+1];
 } GameState;
 
 
 //Priority queue
 typedef struct {
     Point position;
-    int distance;
+    int priority;
 } PriorityNode;
 
 /******************* Initialization functions******************/
@@ -121,7 +122,7 @@ void initializePacman(GameState *game, Point spawn);
 void initializeLeaderboard(GameState *game);
 
 //Initialize a round (Once per round)
-void initializeRound(GameState *game, uint level, uint lives, uint score);
+void initializeRound(GameState *game, uint level, uint lives, uint score, char currentPlayer[MAX_NAME_LENGTH+1]);
 
 /*******************Rendering and MAP functions******************/
 void clear_line(uint row);
@@ -129,12 +130,12 @@ void clear_line(uint row);
 void renderEntities(GameState* game);
 
 //WIP
-void renderFooter(GameState* game);
+void renderFooter(GameState* game, uint ticks);
 
 //This function can be optimized to avoid print overhead
 void renderMap(GameState* game);
 
-void renderGame(GameState* game, int render_bg);
+void renderGame(GameState* game, int render_bg, uint ticks);
 
 //Removes the item on the map and it gets replaced by a space
 void removeItem(GameState* game, Point position);
@@ -184,78 +185,5 @@ void updateTimerState(GameState* game, uint elapsedTime);
 void updateGhostsPositions(GameState* game);
 
 void updateGameState(GameState* game, uint elapsedTime);
-
-/******************* Main game functions ******************/
-
-//Main loop for a single player (until all the lives are consumed)
-void playGame(GameState* game, const char *playerName);
-
-/*
-void main_loop(){
-    GameState game;
-    char playerName[MAX_NAME_LENGTH];
-
-    initializeLeaderboard(&game);
-
-    while (1) {
-        printf("Enter your name: ");
-        //Get user input command pattern
-        playGame(&game, playerName);
-
-        displayLeaderboard(&game);
-
-        printf("Do you want to play again? (y/n): ");
-        char choice;
-        scanf(" %c", &choice);
-        if (choice != 'y' && choice != 'Y') {
-            break;
-        }
-    }
-}
-*/
-
-//MAIN MAIN LOOP (WITH TIME)
-/*
-int pacman_main() {
-    srand(0);
-
-    GameState game;
-    // Initialize the game state, map, and other variables
-
-    struct timespec lastTime, currentTime;
-
-    // What is CLOCK_MONOTONIC, clock_gettime, timespec ?
-    clock_gettime(CLOCK_MONOTONIC, &lastTime);
-
-    while (1) {
-        clock_gettime(CLOCK_MONOTONIC, &currentTime);
-        int elapsedTime = (currentTime.tv_sec - lastTime.tv_sec) * 1000 + (currentTime.tv_nsec - lastTime.tv_nsec) / 1000000;
-
-        if (elapsedTime >= FRAME_TIME) {
-            // Read user input for Pacman direction
-            // For example:
-            // game.pacman.direction = readInput();
-
-            // Update game state
-            updatePacmanPosition(&game);
-            updateGhostsPosition(&game, elapsedTime);
-            updateBoostedState(&game, elapsedTime);
-
-            // Render the game state
-            renderGame(&game);
-
-            // Update lastTime
-            lastTime = currentTime;
-
-            // Add a delay or frame rate control here if necessary
-        } else {
-            // Sleep for the remaining time to maintain a consistent frame rate
-            usleep((FRAME_TIME - elapsedTime) * 1000);
-        }
-    }
-
-    return 0;
-}
-*/
 
 #endif

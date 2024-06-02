@@ -162,16 +162,16 @@ unsigned int rand_range(unsigned int min, unsigned int max){
 
 //Time utils
 unsigned int get_time_ms(){
-    return gettime() / MILISECONDS_PER_TICK;
+    return gettime() / TICKS_PER_MILISECOND;
 }
 
 unsigned int get_time_s(){
-    return gettime() / SECONDS_PER_TICK;
+    return gettime() / TICKS_PER_SECOND;
 }
 
 void sleep(unsigned int ms){
     unsigned int start_time = gettime();
-    unsigned int end_time = start_time + (ms / MILISECONDS_PER_TICK);
+    unsigned int end_time = start_time + (ms / TICKS_PER_MILISECOND);
     while(gettime() < end_time);
 }
 
@@ -179,5 +179,5 @@ unsigned int measure_time_ms(void (*f)()){
     unsigned int start_time = gettime();
     f();
     unsigned int end_time = gettime();
-    return (end_time - start_time) * MILISECONDS_PER_TICK;
+    return (end_time - start_time) * TICKS_PER_MILISECOND;
 }

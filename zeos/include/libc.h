@@ -30,8 +30,8 @@ extern int errno;
 void perror();
 
 //User time utils
-#define SECONDS_PER_TICK 250 
-#define MILISECONDS_PER_TICK 4
+#define TICKS_PER_SECOND 400
+#define TICKS_PER_MILISECOND (1000 / TICKS_PER_SECOND)
 unsigned int get_time_ms();
 unsigned int get_time_s();
 void sleep(unsigned int ms);
