@@ -83,6 +83,7 @@ char predefinedMaps[NUM_LEVELS][MAP_HEIGHT][MAP_WIDTH+1] = {
 /******************* Input handling functions******************/
 void processInput(GameState* game, char input){
     input = lower(input);
+
     switch(input){
         case 'w':
             game->pacman.direction = UP;
@@ -689,7 +690,7 @@ int isRoundOver(GameState * game){
 }
 
 void updateGameState(GameState* game, uint elapsedTime){
-    //updatePacmanPosition(game);
+    updatePacmanPosition(game);
     updateGhostsPositions(game);
     updateTimerState(game, elapsedTime);
 

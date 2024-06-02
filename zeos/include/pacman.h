@@ -25,7 +25,7 @@
 //We need a gettime and sleep SYSCALL!!!!!
 #define BOOSTED_TIME 10000
 #define RESPAWN_TIME 5000
-#define FPS 10
+#define FPS 1
 #define FRAME_TIME 1.0/FPS
 
 #define uint unsigned int
