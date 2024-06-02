@@ -149,7 +149,7 @@ void initializePacman(GameState *game, Point spawn){
 void initializeLeaderboard(GameState *game){
     game->leaderboardSize = 0;
     for(int i = 0; i < MAX_LEADERBOARD_ENTRIES; ++i){
-        strcpy(game->leaderboard[i].name, "");
+        strcpy(game->leaderboard[i].name, "sus");
         game->leaderboard[i].score = 0;
     }
 }
@@ -264,7 +264,6 @@ void renderEntities(GameState* game) {
     }
 }
 
-//WIP
 void renderFooter(GameState* game, uint ticks){
     //Clear footer
     clear_line(MAP_HEIGHT);
@@ -297,8 +296,6 @@ void renderFooter(GameState* game, uint ticks){
     print(game->currentPlayer);
 }
 
-//This function can be optimized to avoid print overhead
-//WIP: adding buffer to avoid blinking
 void renderMap(GameState* game){
     gotoxy(0, 0);
     char buffer[2];
@@ -405,12 +402,11 @@ void renderLeaderboard(GameState* game) {
     gotoxy(10, 5);
     set_color(GREEN, BLACK);
     print("Leaderboard:");
-
+    char buff[50];
     // Render leaderboard entries
     set_color(GREEN, BLACK);
     for (int i = 0; i < game->leaderboardSize; ++i) {
         gotoxy(10, 7 + i);
-        char buff[50];
         itodeca(i, buff);
         print(buff);
         print(".   ");
@@ -630,29 +626,14 @@ Direction dijkstra(GameState* game, Point start, Point target) {
 /******************* Update state ******************/
 void updateLeaderboard(GameState* game, const char* name, int score) {
     // Populate the new entry with the provided name and score
-    LeaderboardEntry newEntry;
-    strcpy(newEntry.name, name);
-    newEntry.score = score;
     
-    // Insert the new entry into the leaderboard
-    int insertIndex = -1;
-    for (int i = 0; i < MAX_LEADERBOARD_ENTRIES; ++i) {
-        if (score > game->leaderboard[i].score) {
-            insertIndex = i;
-            break;
-        }
+    if(game->leaderboardSize < MAX_LEADERBOARD_ENTRIES){
+        strcpy(game->leaderboard[game->leaderboardSize].name, name);
+        game->leaderboard[game->leaderboardSize].score = score;
+        game->leaderboardSize++;
     }
-    
-    if (insertIndex != -1) {
-        // Shift existing entries down to make room for the new entry
-        for (int i = MAX_LEADERBOARD_ENTRIES - 1; i > insertIndex; --i) {
-            game->leaderboard[i] = game->leaderboard[i - 1];
-        }
-        // Insert the new entry
-        game->leaderboard[insertIndex] = newEntry;
-    }
-    game->leaderboardSize++;
 }
+
 void changeGhostsBehaviour(GameState* game, Behaviour bh){
     int ghost_color[NUM_GHOSTS] = {LIGHT_CYAN, LIGHT_MAGENTA, LIGHT_GREEN, RED};
     for(int i = 0; i < NUM_GHOSTS; ++i){

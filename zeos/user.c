@@ -19,20 +19,23 @@ void gameloop()
     char currentPlayer[MAX_NAME_LENGTH+1];
     currentPlayer[MAX_NAME_LENGTH] = '\0';
     initializeLeaderboard(&game);
+    //renderLeaderboard(&game);
+
+    char buff[32];
+    itodeca(game.leaderboardSize, buff);
+    print(buff);
 
     while(1){
         if(game.leaderboardSize >= MAX_LEADERBOARD_ENTRIES){
-            print("No more fellas are allowed to play! Ending game! \n");
-            renderLeaderboard();
+            renderGameOver(&game);
             while(1);
         }
-
         //Get player name
         renderIntroduceName(&game);
         get_player_name(currentPlayer, addr);
 
         //Init round
-        initializeRound(&game, 0, 3, 0, currentPlayer);
+        initializeRound(&game, 0, NUM_LIVES, 0, currentPlayer);
 
         //Time variables to track elapsed time between updates
         int currentTime, elapsedTime, lastTime = get_time_ms();
@@ -57,6 +60,8 @@ void gameloop()
                 updateLeaderboard(&game, game.currentPlayer, game.score);
                 renderGameOver(&game);
                 sleep(3000);
+                renderLeaderboard(&game);
+                sleep(3000);
                 break;
             }
             if(isRoundOver(&game)){
@@ -66,8 +71,9 @@ void gameloop()
                 }
                 else if(game.level >= 1){
                     updateLeaderboard(&game, game.currentPlayer, game.score);
-                    //Game is over for this fella
                     renderGameOver(&game);
+                    sleep(3000);
+                    renderLeaderboard(&game);
                     sleep(3000);
                     break;
                 }

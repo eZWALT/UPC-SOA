@@ -7,6 +7,7 @@
 //Basic game layout
 #define MAX_NAME_LENGTH 10
 #define MAX_LEADERBOARD_ENTRIES 2
+#define NUM_LIVES 1
 #define MAP_HEIGHT 24 //One line must be reserved for info
 #define MAP_WIDTH 80
 
